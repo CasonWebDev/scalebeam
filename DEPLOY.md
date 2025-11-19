@@ -37,18 +37,19 @@ A Vercel irá automaticamente adicionar as variáveis de ambiente:
 Na configuração do projeto, a Vercel detectará automaticamente o Next.js.
 
 **IMPORTANTE:** Não precisa configurar nada! O Vercel usará:
-- **Build Command:** `npm run vercel-build` (detectado automaticamente)
+- **Build Command:** `npm run build` (detectado automaticamente)
 - **Install Command:** `npm install`
 - **Output Directory:** `.next`
 
-### 4. Fazer Deploy
+### 4. Fazer Deploy Inicial
 
 1. Clique em **Deploy**
-2. Aguarde o build completar (pode falhar na primeira vez - normal!)
+2. Aguarde o build completar
+3. **O app vai dar erro ao acessar** - isso é esperado! O banco ainda não tem as tabelas.
 
 ### 5. Rodar Migrations no Banco
 
-**IMPORTANTE:** Após o primeiro deploy, você precisa rodar as migrations manualmente:
+**IMPORTANTE:** Antes do app funcionar, você precisa criar as tabelas no banco:
 
 ```bash
 # Instale a Vercel CLI se ainda não tiver
