@@ -54,10 +54,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
-        // Por enquanto, aceita qualquer senha (desenvolvimento)
-        // Em produção, descomentar a linha abaixo:
-        // const passwordMatch = await bcrypt.compare(credentials.password as string, user.passwordHash)
-        // if (!passwordMatch) return null
+        // Validar senha
+        const passwordMatch = await bcrypt.compare(
+          credentials.password as string,
+          user.passwordHash
+        )
+
+        if (!passwordMatch) {
+          return null
+        }
 
         return {
           id: user.id,

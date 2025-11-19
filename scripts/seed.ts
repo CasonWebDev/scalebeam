@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -21,29 +22,36 @@ async function main() {
 
   // 2. Create Users
   console.log('👥 Criando Users...')
+
+  // Hash das senhas (admin123 e client123)
+  const adminPasswordHash = await bcrypt.hash('admin123', 10)
+  const clientPasswordHash = await bcrypt.hash('client123', 10)
+
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@scalebeam.com',
       name: 'Admin User',
+      passwordHash: adminPasswordHash,
       role: 'ADMIN',
       organizations: {
         connect: { id: org.id }
       }
     },
   })
-  console.log(`  ✓ Admin: ${adminUser.email}`)
+  console.log(`  ✓ Admin: ${adminUser.email} (senha: admin123)`)
 
   const clientUser = await prisma.user.create({
     data: {
       email: 'client@scalebeam.com',
       name: 'Cliente Demo',
+      passwordHash: clientPasswordHash,
       role: 'CLIENT',
       organizations: {
         connect: { id: org.id }
       }
     },
   })
-  console.log(`  ✓ Client: ${clientUser.email}`)
+  console.log(`  ✓ Client: ${clientUser.email} (senha: client123)`)
   console.log('')
 
   // 3. Create Brands
