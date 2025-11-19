@@ -9,11 +9,11 @@ Plataforma SaaS de automação criativa com IA para produção e gestão de cria
 
 ## 🚀 Tecnologias
 
-- **Framework:** Next.js 14 (App Router)
-- **Database:** Vercel Postgres (PostgreSQL)
-- **ORM:** Prisma
+- **Framework:** Next.js 16 (App Router + Turbopack)
+- **Database:** PostgreSQL via [Supabase](https://supabase.com)
+- **ORM:** Prisma 6.19
 - **UI:** Shadcn/UI + Radix UI
-- **Styling:** Tailwind CSS (Slate theme)
+- **Styling:** Tailwind CSS v4
 - **Notifications:** Sonner
 - **Deployment:** Vercel
 
@@ -47,7 +47,7 @@ Plataforma SaaS de automação criativa com IA para produção e gestão de cria
 
 - Node.js 18+
 - npm ou yarn
-- PostgreSQL (local ou Vercel Postgres)
+- Conta no [Supabase](https://supabase.com) (gratuita)
 
 ### Instalação
 
@@ -58,84 +58,88 @@ cd scalebeam
 
 # Instale as dependências
 npm install
-
-# Configure as variáveis de ambiente
-cp .env.example .env.local
-
-# Edite .env.local com suas credenciais do banco
 ```
 
-### Desenvolvimento Local
+### Configuração do Banco de Dados (Supabase)
 
-**Opção 1: Com Vercel Postgres**
+#### Opção 1: Supabase Cloud (Recomendado)
 
-```bash
-# Instale a Vercel CLI
-npm i -g vercel
+1. Crie um projeto em [supabase.com](https://supabase.com/dashboard)
+2. Acesse: Project → Connect → Session pooler
+3. Copie as connection strings
+4. Crie `.env.local`:
 
-# Faça login
-vercel login
+```env
+# Supabase Database
+DATABASE_URL="postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres"
 
-# Puxe as variáveis de ambiente
-vercel env pull .env.local
-
-# Rode as migrations
-npm run db:migrate
-
-# Popule o banco
-npm run db:seed
-
-# Inicie o servidor
-npm run dev
+# Supabase Client (opcional)
+NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT_REF].supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="[ANON_KEY]"
 ```
 
-**Opção 2: Com PostgreSQL Local**
+5. Rode as migrations e popule o banco:
 
 ```bash
-# Inicie o PostgreSQL
-brew services start postgresql@15
+npm run db:migrate:deploy  # Aplica migrations
+npm run db:reset:seed      # Limpa e popula com dados de teste
+```
 
-# Crie o banco
-createdb scalebeam
+6. Inicie o servidor:
 
-# Configure .env.local
-echo 'DATABASE_URL="postgresql://localhost:5432/scalebeam"' > .env.local
-echo 'DIRECT_URL="postgresql://localhost:5432/scalebeam"' >> .env.local
-
-# Rode as migrations
-npm run db:migrate
-
-# Popule o banco
-npm run db:seed
-
-# Inicie o servidor
+```bash
 npm run dev
 ```
 
 Acesse: [http://localhost:3000](http://localhost:3000)
 
+#### Opção 2: Docker Local
+
+Para rodar Supabase localmente com Docker, veja: [SUPABASE.md](./SUPABASE.md)
+
 ## 🚢 Deploy na Vercel
 
-Siga o guia completo em [DEPLOY.md](./DEPLOY.md)
+**Passo a Passo:**
 
-**Resumo rápido:**
+1. **Conecte o repositório à Vercel**
 
-1. Conecte o repositório à Vercel
-2. Crie um banco Vercel Postgres
-3. Configure o build command: `prisma generate && prisma migrate deploy && next build`
-4. Faça o deploy
-5. Rode o seed usando `vercel env pull` + `npm run db:seed`
+2. **Configure variáveis de ambiente:**
+   ```
+   DATABASE_URL        # Session pooler URL (para serverless)
+   DIRECT_URL          # Direct connection URL (para migrations)
+   NEXT_PUBLIC_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   ```
+
+3. **Configure Build Command:**
+   ```bash
+   prisma generate && prisma migrate deploy && next build
+   ```
+
+4. **Deploy:**
+   - Push para `main` → deploy automático
+   - Ou use: `vercel --prod`
+
+5. **Popule o banco (via terminal local):**
+   ```bash
+   DATABASE_URL="[PRODUCTION_URL]" npm run db:reset:seed
+   ```
+
+Veja guia completo em: [SUPABASE.md](./SUPABASE.md)
 
 ## 📊 Estrutura do Banco
 
 ```
-User
-└── Organization
-    └── Brand
-        ├── Asset (logos, brandbooks)
-        └── Project
-            ├── Creative (imagens, vídeos)
-            └── Comment
+Organization
+├── User (many-to-many)
+├── Brand
+│   ├── Asset (logos, imagens)
+│   ├── Template (modelos de criativo)
+│   └── Project
+│       ├── Creative (criativos finais)
+│       └── Comment
+└── ActivityLog (histórico de ações)
 ```
 
 **Enums:**
@@ -143,30 +147,27 @@ User
 - `PlanType`: STARTER, PROFESSIONAL, AGENCY
 - `ProjectStatus`: DRAFT, IN_PRODUCTION, READY, APPROVED, REVISION
 
-## 🔐 Autenticação (Protótipo)
+## 🔐 Autenticação (Em Desenvolvimento)
 
-O sistema atual usa autenticação mockada para demonstração:
+O sistema atual usa autenticação mockada.
 
-**Admin:**
-- Qualquer email com `@uxer.com`
-- Qualquer email com "admin"
-- `admin@admin.com`
-
-**Cliente:**
-- Qualquer outro email
+**Usuários de teste** (após `npm run db:reset:seed`):
+- **Admin**: admin@scalebeam.com (ADMIN)
+- **Cliente**: client@scalebeam.com (CLIENT)
 
 **Senha:** Qualquer valor (não validada no protótipo)
 
-Para produção, recomenda-se implementar:
-- [NextAuth.js](https://next-auth.js.org/)
-- [Clerk](https://clerk.dev/)
-- [Auth0](https://auth0.com/)
+**Próximas implementações:**
+- [ ] NextAuth.js com Supabase Auth
+- [ ] Sistema de convites
+- [ ] Recuperação de senha
+- [ ] Multi-fator (2FA)
 
 ## 📝 Scripts Disponíveis
 
 ```bash
 # Desenvolvimento
-npm run dev              # Inicia servidor de desenvolvimento
+npm run dev              # Inicia servidor de desenvolvimento (Turbopack)
 
 # Build
 npm run build            # Build de produção (com migrations)
@@ -175,7 +176,9 @@ npm run start            # Inicia servidor de produção
 # Database
 npm run db:migrate       # Cria e aplica migrations (dev)
 npm run db:migrate:deploy # Aplica migrations (prod)
-npm run db:seed          # Popula banco com dados de exemplo
+npm run db:seed          # Popula banco com dados de teste
+npm run db:reset         # Limpa todas as tabelas
+npm run db:reset:seed    # Limpa e popula (setup completo)
 npm run db:studio        # Abre Prisma Studio
 npm run db:push          # Push schema sem migrations
 
@@ -183,40 +186,51 @@ npm run db:push          # Push schema sem migrations
 npm run lint             # Executa ESLint
 ```
 
+### Dados de Teste
+
+Após `npm run db:reset:seed`, o banco contém:
+
+- ✅ 1 Organization: **ScaleBeam Demo** (Professional)
+- ✅ 2 Users: Admin e Client
+- ✅ 2 Brands: **Nike Brasil**, **Adidas Brasil**
+- ✅ 4 Assets (logos e produtos)
+- ✅ 6 Templates (Feed, Stories, Banner)
+- ✅ 2 Projects (diferentes status)
+- ✅ 3 Creatives (para testar aprovação)
+- ✅ 3 Comments (feedback simulado)
+- ✅ 2 Activity Logs
+
 ## 🗂️ Estrutura de Pastas
 
 ```
 scalebeam/
 ├── app/
-│   ├── (auth)/          # Rotas de autenticação
-│   │   ├── login/
-│   │   └── signup/
-│   ├── (marketing)/     # Páginas de marketing
-│   │   ├── pricing/
-│   │   └── roi-calculator/
-│   ├── admin/           # Dashboard admin
-│   │   ├── brands/
-│   │   ├── projects/
-│   │   └── settings/
+│   ├── admin/           # Dashboard administrativo
+│   │   └── page.tsx     # Visão geral de projetos
 │   ├── client/          # Portal do cliente
-│   │   ├── brands/
-│   │   └── projects/
+│   │   ├── brands/[id]/ # Detalhes da marca
+│   │   └── projects/    # Gestão de projetos
+│   │       └── new/     # Criar novo projeto
+│   ├── api/             # API Routes
+│   │   └── client/
+│   │       └── brands/  # Endpoints de brands
 │   └── page.tsx         # Landing page
 ├── components/
 │   ├── ui/              # Componentes Shadcn/UI
-│   ├── admin-sidebar.tsx
-│   ├── client-sidebar.tsx
+│   ├── lightbox.tsx     # Visualizador de imagens
+│   ├── creative-approval-grid-grouped.tsx
 │   └── ...
 ├── lib/
-│   ├── prisma.ts        # Cliente Prisma
+│   ├── db.ts            # Prisma client singleton
 │   └── utils.ts         # Utilitários
 ├── prisma/
 │   ├── schema.prisma    # Schema do banco
-│   ├── seed.ts          # Seed de dados
-│   └── migrations/
+│   └── migrations/      # Migrations do Prisma
+├── scripts/
+│   ├── seed.ts          # Dados de teste
+│   └── reset-database.ts # Limpar banco
 └── public/
-    ├── brands/          # Logos e brandbooks
-    └── creatives/       # Assets de criativos
+    └── ...              # Arquivos estáticos
 ```
 
 ## 🎨 Design System
