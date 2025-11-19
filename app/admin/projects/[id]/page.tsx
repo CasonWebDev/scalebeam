@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { MessageSquare } from "lucide-react"
+import { MessageSquare, Upload } from "lucide-react"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
