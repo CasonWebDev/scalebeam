@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Folder, Image, CheckCircle2, Clock, AlertCircle, Users, DollarSign, Activity } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Folder, Image, CheckCircle2, Clock, AlertCircle, Users, DollarSign, Activity, LogOut } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { auth, signOut } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
 
@@ -148,16 +151,45 @@ const paymentStatusConfig: Record<string, {
 }
 
 export default async function AdminDashboard() {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "ADMIN") {
+    redirect("/client")
+  }
+
   const metrics = await getMetrics()
 
   return (
     <div className="flex flex-col gap-6 p-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Visão geral dos projetos, clientes e atividades
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Visão geral dos projetos, clientes e atividades
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium">{session.user.name}</p>
+            <p className="text-xs text-muted-foreground">{session.user.email}</p>
+          </div>
+          <form
+            action={async () => {
+              "use server"
+              await signOut({ redirectTo: "/login" })
+            }}
+          >
+            <Button type="submit" variant="outline" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </form>
+        </div>
       </div>
 
       {/* Metrics Grid */}

@@ -4,10 +4,13 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Upload, Download, Eye } from "lucide-react"
+import { Upload, Download, Eye, LogOut } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Lightbox } from "@/components/lightbox"
+import { useUser } from "@/lib/hooks/use-user"
+import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 interface Brand {
   id: string
@@ -51,19 +54,46 @@ export default function BrandDetailPage({
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [brandId, setBrandId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const { user, isLoading } = useUser()
+  const router = useRouter()
 
   useEffect(() => {
     params.then(({ id }) => {
       setBrandId(id)
       fetch(`/api/client/brands/${id}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            if (res.status === 403) {
+              throw new Error("Você não tem permissão para acessar esta marca")
+            }
+            throw new Error("Erro ao carregar marca")
+          }
+          return res.json()
+        })
         .then(data => setBrand(data))
-        .catch(console.error)
+        .catch(err => {
+          console.error(err)
+          setError(err.message)
+        })
     })
   }, [])
 
-  if (!brand) {
+  async function handleLogout() {
+    await signOut({ callbackUrl: "/login" })
+  }
+
+  if (isLoading || !brand) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-destructive">{error}</p>
+        <Button onClick={() => router.push("/client")}>Voltar</Button>
+      </div>
+    )
   }
 
   const templateImages = brand.templates.map(t => ({
@@ -74,6 +104,23 @@ export default function BrandDetailPage({
 
   return (
     <div className="flex flex-col gap-6 p-8">
+      {/* User Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-border">
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground">Área do Cliente</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium">{user?.name}</p>
+            <p className="text-xs text-muted-foreground">{user?.email}</p>
+          </div>
+          <Button onClick={handleLogout} variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </Button>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">

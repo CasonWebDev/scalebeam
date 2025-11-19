@@ -1,11 +1,18 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth()
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
 
     const brand = await prisma.brand.findUnique({
@@ -13,6 +20,7 @@ export async function GET(
       include: {
         organization: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -37,6 +45,16 @@ export async function GET(
     if (!brand) {
       return NextResponse.json({ error: "Brand not found" }, { status: 404 })
     }
+
+    // Verificar acesso: CLIENTs só podem ver suas próprias marcas
+    if (session.user.role === "CLIENT") {
+      const hasAccess = session.user.organizationIds.includes(brand.organization.id)
+
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+    }
+    // ADMINs podem ver todas as marcas
 
     return NextResponse.json(brand)
   } catch (error) {

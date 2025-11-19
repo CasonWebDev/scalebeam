@@ -2,18 +2,17 @@ import { prisma } from "@/lib/prisma"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FolderOpen, Upload, CheckCircle2, Clock } from "lucide-react"
+import { FolderOpen, Upload, CheckCircle2, Clock, LogOut } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { auth, signOut } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
 
-// Mock: usando organização Tech Startup Inc (primeiro cliente)
-const CLIENT_ORG_ID = "Tech Startup Inc"
-
-async function getClientData() {
-  const organization = await prisma.organization.findFirst({
-    where: { name: CLIENT_ORG_ID },
+async function getClientData(organizationIds: string[]) {
+  const organizations = await prisma.organization.findMany({
+    where: { id: { in: organizationIds } },
     include: {
       brands: {
         include: {
@@ -25,12 +24,15 @@ async function getClientData() {
     },
   })
 
-  if (!organization) return null
+  if (organizations.length === 0) return null
+
+  // Usar a primeira organização para o display principal
+  const organization = organizations[0]
 
   const projects = await prisma.project.findMany({
     where: {
       brand: {
-        organizationId: organization.id,
+        organizationId: { in: organizationIds },
       },
     },
     include: {
@@ -44,25 +46,36 @@ async function getClientData() {
   })
 
   const stats = {
-    totalBrands: organization.brands.length,
+    totalBrands: await prisma.brand.count({
+      where: { organizationId: { in: organizationIds } },
+    }),
     totalProjects: await prisma.project.count({
-      where: { brand: { organizationId: organization.id } },
+      where: { brand: { organizationId: { in: organizationIds } } },
     }),
     projectsReady: await prisma.project.count({
       where: {
-        brand: { organizationId: organization.id },
+        brand: { organizationId: { in: organizationIds } },
         status: "READY",
       },
     }),
     projectsApproved: await prisma.project.count({
       where: {
-        brand: { organizationId: organization.id },
+        brand: { organizationId: { in: organizationIds } },
         status: "APPROVED",
       },
     }),
   }
 
-  return { organization, projects, stats }
+  const brands = await prisma.brand.findMany({
+    where: { organizationId: { in: organizationIds } },
+    include: {
+      _count: {
+        select: { projects: true, assets: true },
+      },
+    },
+  })
+
+  return { organization, projects, stats, brands }
 }
 
 const statusConfig = {
@@ -74,16 +87,50 @@ const statusConfig = {
 }
 
 export default async function ClientDashboard() {
-  const data = await getClientData()
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "CLIENT") {
+    redirect("/admin")
+  }
+
+  const data = await getClientData(session.user.organizationIds)
 
   if (!data) {
     return <div className="p-8">Organização não encontrada</div>
   }
 
-  const { organization, projects, stats } = data
+  const { organization, projects, stats, brands } = data
 
   return (
     <div className="flex flex-col gap-6 p-8">
+      {/* User Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-border">
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground">Área do Cliente</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium">{session.user.name}</p>
+            <p className="text-xs text-muted-foreground">{session.user.email}</p>
+          </div>
+          <form
+            action={async () => {
+              "use server"
+              await signOut({ redirectTo: "/login" })
+            }}
+          >
+            <Button type="submit" variant="outline" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </form>
+        </div>
+      </div>
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">
@@ -165,7 +212,7 @@ export default async function ClientDashboard() {
           </Link>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          {organization.brands.map((brand) => (
+          {brands.map((brand) => (
             <Link
               key={brand.id}
               href={`/client/brands/${brand.id}`}
