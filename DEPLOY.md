@@ -34,28 +34,48 @@ A Vercel irá automaticamente adicionar as variáveis de ambiente:
 
 ### 3. Configurar Build Settings
 
-Na configuração do projeto:
+Na configuração do projeto, a Vercel detectará automaticamente o Next.js.
 
-**Framework Preset:** Next.js
-
-**Build Command:**
-```bash
-npx prisma generate && npx prisma migrate deploy && next build
-```
-
-**Install Command:**
-```bash
-npm install
-```
-
-**Output Directory:** `.next`
+**IMPORTANTE:** Não precisa configurar nada! O Vercel usará:
+- **Build Command:** `npm run vercel-build` (detectado automaticamente)
+- **Install Command:** `npm install`
+- **Output Directory:** `.next`
 
 ### 4. Fazer Deploy
 
 1. Clique em **Deploy**
-2. Aguarde o build completar
+2. Aguarde o build completar (pode falhar na primeira vez - normal!)
 
-### 5. Popular o Banco de Dados (Seed)
+### 5. Rodar Migrations no Banco
+
+**IMPORTANTE:** Após o primeiro deploy, você precisa rodar as migrations manualmente:
+
+```bash
+# Instale a Vercel CLI se ainda não tiver
+npm i -g vercel
+
+# Faça login
+vercel login
+
+# Conecte ao projeto
+vercel link
+
+# Puxe as variáveis de ambiente
+vercel env pull .env.local
+
+# Rode as migrations
+npx prisma migrate deploy
+
+# Popule o banco
+npx tsx prisma/seed.ts
+```
+
+Depois disso, faça um novo deploy:
+```bash
+vercel --prod
+```
+
+### 6. Popular o Banco de Dados (Seed)
 
 Após o primeiro deploy, você precisa rodar o seed para popular o banco:
 
