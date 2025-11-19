@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  CLIENT
+}
+
+enum PlanType {
+  STARTER
+  PROFESSIONAL
+  AGENCY
+}
+
+enum ProjectStatus {
+  DRAFT
+  IN_PRODUCTION
+  READY
+  APPROVED
+  REVISION
+}
+
+// Models
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  role          UserRole @default(CLIENT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizations Organization[]
+  comments      Comment[]
+}
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  plan            PlanType @default(STARTER)
+  maxCreatives    Int      @default(300)
+  maxBrands       Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           User[]
+  brands          Brand[]
+}
+
+model Brand {
+  id              String   @id @default(cuid())
+  name            String
+  logoUrl         String?
+  brandBookUrl    String?
+  toneOfVoice     String?
+  primaryColor    String?
+  secondaryColor  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  assets          Asset[]
+  projects        Project[]
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  type        String   // image, pdf, video
+  size        Int?
+  createdAt   DateTime @default(now())
+
+  brandId     String
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id                  String        @id @default(cuid())
+  name                String
+  briefingCsvUrl      String?
+  briefingData        String?       // JSON string com dados do CSV
+  estimatedCreatives  Int           @default(0)
+  status              ProjectStatus @default(DRAFT)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  brandId             String
+  brand               Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  creatives           Creative[]
+  comments            Comment[]
+}
+
+model Creative {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  thumbnailUrl String?
+  format      String   // jpg, png, mp4
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
