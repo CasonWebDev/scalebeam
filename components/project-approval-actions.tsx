@@ -32,43 +32,74 @@ export function ProjectApprovalActions({
   const handleApprove = async () => {
     setIsApproving(true)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch(`/api/projects/${projectId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      })
 
-    toast.success("Criativos aprovados com sucesso!", {
-      description: `O projeto "${projectName}" foi marcado como aprovado.`,
-    })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to approve project")
+      }
 
-    setIsApproving(false)
+      toast.success("Criativos aprovados com sucesso!", {
+        description: `O projeto "${projectName}" foi marcado como aprovado.`,
+      })
 
-    // Simulate page reload
-    setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      // Reload page after 1 second
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    } catch (error: any) {
+      console.error("Approval error:", error)
+      toast.error(error.message || "Erro ao aprovar projeto")
+      setIsApproving(false)
+    }
   }
 
   const handleRequestRevision = async () => {
-    if (!revisionNotes.trim()) {
-      toast.error("Por favor, descreva os ajustes necessários")
+    if (!revisionNotes.trim() || revisionNotes.length < 10) {
+      toast.error("Por favor, descreva os ajustes necessários (mínimo 10 caracteres)")
       return
     }
 
     setIsRequesting(true)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch(`/api/projects/${projectId}/request-revision`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          comment: revisionNotes,
+        }),
+      })
 
-    toast.success("Solicitação de ajustes enviada!", {
-      description: "A equipe UXER foi notificada sobre as revisões necessárias.",
-    })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to request revision")
+      }
 
-    setIsRequesting(false)
-    setRevisionNotes("")
+      toast.success("Solicitação de ajustes enviada!", {
+        description: "A equipe UXER foi notificada sobre as revisões necessárias.",
+      })
 
-    // Simulate page reload
-    setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      setRevisionNotes("")
+
+      // Reload page after 1 second
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    } catch (error: any) {
+      console.error("Revision error:", error)
+      toast.error(error.message || "Erro ao solicitar revisão")
+      setIsRequesting(false)
+    }
   }
 
   return (

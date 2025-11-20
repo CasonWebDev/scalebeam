@@ -9,6 +9,8 @@ import { ptBR } from "date-fns/locale"
 import { DownloadAllButton } from "@/components/creative-download-button"
 import { AddCommentForm } from "@/components/add-comment-form"
 import { CreativeApprovalGridGrouped } from "@/components/creative-approval-grid-grouped"
+import { ProjectRefreshButton } from "@/components/project-refresh-button"
+import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
 
 export const dynamic = 'force-dynamic'
 
@@ -59,7 +61,7 @@ export default async function ClientProjectDetailPage({
     <div className="flex flex-col gap-6 p-8">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-semibold tracking-tight">{project.name}</h1>
             <Badge variant={config.variant}>{config.label}</Badge>
@@ -67,6 +69,10 @@ export default async function ClientProjectDetailPage({
           <p className="text-muted-foreground mt-1">
             {project.brand.name} · {project.brand.organization.name}
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <ProjectAutoRefresh intervalSeconds={30} />
+          <ProjectRefreshButton />
         </div>
       </div>
 

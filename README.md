@@ -20,20 +20,24 @@ Plataforma SaaS de automação criativa com IA para produção e gestão de cria
 ## 📦 Funcionalidades
 
 ### Admin (UXER)
-- Dashboard com visão geral de projetos
-- Gerenciamento de marcas e organizações
-- Upload e gerenciamento de criativos
-- Controle de workflow (Draft → In Production → Ready → Approved)
-- QA visual automatizado
-- Comentários e revisões
+- ✅ Dashboard com visão geral de projetos
+- ✅ Gerenciamento de marcas e organizações
+- ✅ Upload e gerenciamento de criativos (Supabase Storage)
+- ✅ Controle de workflow (Draft → In Production → Ready → Approved)
+- ✅ Sistema de validação de uploads (tipos e tamanhos)
+- ✅ Comentários e revisões
+- ✅ Activity logs completos
 
 ### Cliente
-- Dashboard personalizado
-- Gerenciamento de marcas próprias
-- Visualização de projetos e criativos
-- Sistema de aprovação/revisão
-- Download de assets
-- Acesso ao brandbook e guidelines
+- ✅ Dashboard personalizado
+- ✅ Gerenciamento de marcas próprias
+- ✅ Visualização de projetos e criativos
+- ✅ **Sistema de aprovação/revisão completo**
+- ✅ **Auto-refresh a cada 30 segundos**
+- ✅ **Botão de atualização manual**
+- ✅ Download de assets
+- ✅ Histórico de atividades visual
+- ✅ Acesso ao brandbook e guidelines
 
 ### Marketing
 - Landing page completa
@@ -147,21 +151,32 @@ Organization
 - `PlanType`: STARTER, PROFESSIONAL, AGENCY
 - `ProjectStatus`: DRAFT, IN_PRODUCTION, READY, APPROVED, REVISION
 
-## 🔐 Autenticação (Em Desenvolvimento)
+## 🔐 Autenticação
 
-O sistema atual usa autenticação mockada.
+Sistema completo de autenticação com NextAuth.js e bcrypt.
 
 **Usuários de teste** (após `npm run db:reset:seed`):
-- **Admin**: admin@scalebeam.com (ADMIN)
-- **Cliente**: client@scalebeam.com (CLIENT)
+- **Admin**: `admin@scalebeam.com` / `admin123`
+- **Cliente**: `client@scalebeam.com` / `client123`
 
-**Senha:** Qualquer valor (não validada no protótipo)
+**Recursos implementados:**
+- ✅ NextAuth.js 5 (beta) com Credentials Provider
+- ✅ Senhas hashadas com bcrypt (10 rounds)
+- ✅ Validação de senha em todas as rotas
+- ✅ Sistema de permissões baseado em roles (ADMIN/CLIENT)
+- ✅ Proteção de rotas por organização
+- ✅ Session JWT com dados do usuário
+
+**Para testar autenticação:**
+```bash
+npm run test:password  # Testa validação de senhas
+```
 
 **Próximas implementações:**
-- [ ] NextAuth.js com Supabase Auth
 - [ ] Sistema de convites
 - [ ] Recuperação de senha
 - [ ] Multi-fator (2FA)
+- [ ] OAuth providers (Google, GitHub)
 
 ## 📝 Scripts Disponíveis
 
@@ -181,6 +196,9 @@ npm run db:reset         # Limpa todas as tabelas
 npm run db:reset:seed    # Limpa e popula (setup completo)
 npm run db:studio        # Abre Prisma Studio
 npm run db:push          # Push schema sem migrations
+
+# Testes
+npm run test:password    # Testa validação de autenticação
 
 # Linting
 npm run lint             # Executa ESLint
