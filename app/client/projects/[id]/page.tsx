@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, MessageSquare } from "lucide-react"
-import { notFound } from "next/navigation"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -27,6 +28,16 @@ export default async function ClientProjectDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "CLIENT") {
+    redirect("/admin")
+  }
+
   const { id } = await params
   const project = await prisma.project.findUnique({
     where: { id },
@@ -49,6 +60,11 @@ export default async function ClientProjectDetailPage({
   })
 
   if (!project) {
+    notFound()
+  }
+
+  // Verificar acesso - cliente deve ser da mesma organização
+  if (!session.user.organizationIds.includes(project.brand.organization.id)) {
     notFound()
   }
 

@@ -20,20 +20,35 @@ export function AddCommentForm({ projectId }: AddCommentFormProps) {
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800))
+    try {
+      const response = await fetch(`/api/projects/${projectId}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: comment }),
+      })
 
-    toast.success("Comentário adicionado!", {
-      description: "Sua mensagem foi enviada à equipe UXER.",
-    })
+      if (!response.ok) {
+        throw new Error("Falha ao adicionar comentário")
+      }
 
-    setComment("")
-    setIsSubmitting(false)
+      toast.success("Comentário adicionado!", {
+        description: "Sua mensagem foi enviada à equipe.",
+      })
 
-    // Simulate page reload to show new comment
-    setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      setComment("")
+
+      // Recarregar página para mostrar novo comentário
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    } catch (error) {
+      toast.error("Erro ao adicionar comentário")
+      console.error(error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
