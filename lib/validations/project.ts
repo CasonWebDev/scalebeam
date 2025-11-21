@@ -29,7 +29,7 @@ export const updateProjectStatusSchema = z.object({
   status: z.enum(
     ["DRAFT", "IN_PRODUCTION", "READY", "APPROVED", "REVISION"],
     {
-      errorMap: () => ({ message: "Status de projeto inválido" }),
+      message: "Status de projeto inválido",
     }
   ),
   comment: z
