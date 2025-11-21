@@ -1,34 +1,35 @@
 import { prisma } from "@/lib/prisma"
-import { Badge } from "@/components/ui/badge"
+import { auth, signOut } from "@/lib/auth"
+import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { LogOut, FileText, Building2 } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { PROJECT_STATUS_CONFIG } from "@/lib/constants"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-const statusConfig = {
-  DRAFT: { label: "Rascunho", variant: "secondary" as const },
-  IN_PRODUCTION: { label: "Em Produção", variant: "default" as const },
-  READY: { label: "Pronto", variant: "default" as const },
-  APPROVED: { label: "Aprovado", variant: "default" as const },
-  REVISION: { label: "Em Revisão", variant: "destructive" as const },
-}
-
-export default async function ProjectsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string }>
-}) {
-  const { status } = await searchParams
-  const statusFilter = status as keyof typeof statusConfig | undefined
-
+async function getAllProjects() {
   const projects = await prisma.project.findMany({
-    where: statusFilter ? { status: statusFilter } : undefined,
     include: {
       brand: {
-        include: {
-          organization: true,
+        select: {
+          id: true,
+          name: true,
+          logoUrl: true,
+          organization: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      template: {
+        select: {
+          name: true,
         },
       },
       _count: {
@@ -39,123 +40,168 @@ export default async function ProjectsPage({
       },
     },
     orderBy: {
-      updatedAt: "desc",
+      createdAt: "desc",
     },
+    take: 50, // Limitar a 50 projetos (adicionar paginação depois)
   })
+
+  return projects
+}
+
+export default async function AdminProjectsPage() {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "ADMIN") {
+    redirect("/client")
+  }
+
+  const projects = await getAllProjects()
+
+  // Agrupar por status
+  const projectsByStatus = {
+    DRAFT: projects.filter((p) => p.status === "DRAFT"),
+    IN_PRODUCTION: projects.filter((p) => p.status === "IN_PRODUCTION"),
+    READY: projects.filter((p) => p.status === "READY"),
+    APPROVED: projects.filter((p) => p.status === "APPROVED"),
+    REVISION: projects.filter((p) => p.status === "REVISION"),
+  }
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* User Header */}
+      <div className="flex items-start justify-between pb-4 border-b border-border">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Projetos</h1>
-          <p className="text-muted-foreground mt-1">{projects.length} projetos encontrados</p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Todos os Projetos
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {projects.length} projetos totais
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium">{session.user.name}</p>
+            <p className="text-xs text-muted-foreground">{session.user.email}</p>
+          </div>
+          <form
+            action={async () => {
+              "use server"
+              await signOut({ redirectTo: "/login" })
+            }}
+          >
+            <Button type="submit" variant="outline" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </form>
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex gap-2">
-          <Link
-            href="/admin/projects"
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              !statusFilter
-                ? "bg-secondary text-secondary-foreground"
-                : "text-muted-foreground hover:bg-secondary/50"
-            }`}
-          >
-            Todos
-          </Link>
-          {Object.entries(statusConfig).map(([status, config]) => (
-            <Link
-              key={status}
-              href={`/admin/projects?status=${status}`}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                statusFilter === status
-                  ? "bg-secondary text-secondary-foreground"
-                  : "text-muted-foreground hover:bg-secondary/50"
-              }`}
-            >
-              {config.label}
-            </Link>
-          ))}
-        </div>
-      </Card>
+      {/* Status Cards */}
+      <div className="grid gap-4 md:grid-cols-5">
+        {Object.entries(projectsByStatus).map(([status, items]) => (
+          <Card key={status} className="p-4">
+            <div className="flex flex-col gap-2">
+              <Badge className={PROJECT_STATUS_CONFIG[status as keyof typeof PROJECT_STATUS_CONFIG].color}>
+                {PROJECT_STATUS_CONFIG[status as keyof typeof PROJECT_STATUS_CONFIG].label}
+              </Badge>
+              <span className="text-3xl font-bold">{items.length}</span>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-      {/* Projects Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  Projeto
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  Marca / Organização
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  Criativos
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  Última Atualização
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {projects.map((project) => {
-                const config = statusConfig[project.status]
-                return (
-                  <tr
+      {/* Projects List */}
+      <div className="space-y-6">
+        {Object.entries(projectsByStatus).map(([status, items]) => {
+          if (items.length === 0) return null
+
+          return (
+            <div key={status}>
+              <h2 className="text-lg font-semibold mb-4">
+                {PROJECT_STATUS_CONFIG[status as keyof typeof PROJECT_STATUS_CONFIG].label} (
+                {items.length})
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {items.map((project) => (
+                  <Card
                     key={project.id}
-                    className="group hover:bg-secondary/50 transition-colors"
+                    className="p-6 hover:bg-secondary/50 transition-colors"
                   >
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/projects/${project.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {project.name}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">{project.brand.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {project.brand.organization.name}
-                        </span>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">
+                          {project.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {project.brand.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <Building2 className="h-3 w-3" />
+                          <span>{project.brand.organization.name}</span>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={config.variant}>{config.label}</Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-muted-foreground">
-                        {project._count.creatives} / {project.estimatedCreatives}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(project.updatedAt), {
+                    </div>
+
+                    {project.template && (
+                      <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+                        <FileText className="h-4 w-4" />
+                        <span>{project.template.name}</span>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border mb-4">
+                      <div>
+                        <span className="text-sm text-muted-foreground">
+                          Criativos
+                        </span>
+                        <p className="text-lg font-semibold">
+                          {project._count.creatives}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-muted-foreground">
+                          Comentários
+                        </span>
+                        <p className="text-lg font-semibold">
+                          {project._count.comments}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground mb-4">
+                      Criado{" "}
+                      {formatDistanceToNow(new Date(project.createdAt), {
                         addSuffix: true,
                         locale: ptBR,
                       })}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
 
-        {projects.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground">Nenhum projeto encontrado</p>
+                    <Button asChild className="w-full">
+                      <Link href={`/admin/projects/${project.id}`}>
+                        Ver Detalhes
+                      </Link>
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {projects.length === 0 && (
+        <Card className="p-12">
+          <div className="flex flex-col items-center justify-center text-center">
+            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Nenhum projeto criado ainda</p>
           </div>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   )
 }

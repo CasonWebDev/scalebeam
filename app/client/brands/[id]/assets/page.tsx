@@ -1,116 +1,165 @@
 import { prisma } from "@/lib/prisma"
+import { auth, signOut } from "@/lib/auth"
+import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Upload, FileImage, FileText, ArrowLeft } from "lucide-react"
+import { LogOut, Upload, Download, Trash2, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import Image from "next/image"
+import { formatFileSize } from "@/lib/constants"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-export default async function UploadAssetsPage({
+async function getBrandAssets(brandId: string, organizationIds: string[]) {
+  const brand = await prisma.brand.findUnique({
+    where: { id: brandId },
+    include: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      assets: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
+  })
+
+  if (!brand) {
+    return null
+  }
+
+  // Verificar acesso
+  if (!organizationIds.includes(brand.organization.id)) {
+    return null
+  }
+
+  return brand
+}
+
+export default async function BrandAssetsPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "CLIENT") {
+    redirect("/admin")
+  }
+
   const { id } = await params
-  const brand = await prisma.brand.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-    },
-  })
+  const brand = await getBrandAssets(id, session.user.organizationIds)
 
   if (!brand) {
     notFound()
   }
 
   return (
-    <div className="flex flex-col gap-6 p-8 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/client/brands/${brand.id}`}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Link>
-        </Button>
+    <div className="flex flex-col gap-6 p-8">
+      {/* User Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Upload de Assets</h1>
-          <p className="text-muted-foreground mt-1">{brand.name}</p>
+          <h2 className="text-sm font-medium text-muted-foreground">
+            <Link href={`/client/brands/${brand.id}`} className="hover:underline">
+              {brand.name}
+            </Link>
+            {" / Assets"}
+          </h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium">{session.user.name}</p>
+            <p className="text-xs text-muted-foreground">{session.user.email}</p>
+          </div>
+          <form
+            action={async () => {
+              "use server"
+              await signOut({ redirectTo: "/login" })
+            }}
+          >
+            <Button type="submit" variant="outline" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </form>
         </div>
       </div>
 
-      {/* Upload Instructions */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-3">Tipos de Assets Recomendados</h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-            <FileImage className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">Logos</p>
-              <p className="text-xs text-muted-foreground">PNG, SVG (transparente)</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-            <FileImage className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">Imagens</p>
-              <p className="text-xs text-muted-foreground">JPG, PNG (produtos, team)</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-            <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">Brandbook</p>
-              <p className="text-xs text-muted-foreground">PDF (manual da marca)</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Upload Area - MOCKADO */}
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-12 text-center hover:bg-secondary/20 transition-colors cursor-pointer">
-          <Upload className="h-16 w-16 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Arraste arquivos aqui ou clique para selecionar</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Suporta: PNG, JPG, SVG, PDF (máximo 10MB por arquivo)
-          </p>
-          <Button>
-            Selecionar Arquivos
-          </Button>
-        </div>
-
-        <div className="mt-6 p-4 bg-muted rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            <strong>Nota:</strong> Esta é uma interface mockada. Em produção, o upload seria processado e armazenado no servidor.
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Assets da Marca</h1>
+          <p className="text-muted-foreground mt-1">
+            {brand.assets.length} arquivo(s)
           </p>
         </div>
-      </Card>
+        <Button>
+          <Upload className="h-4 w-4 mr-2" />
+          Upload Assets
+        </Button>
+      </div>
 
-      {/* Guidelines */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-3">Diretrizes de Upload</h2>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            <span>Logos devem ser em alta resolução e com fundo transparente quando possível</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            <span>Imagens de produtos devem ter boa iluminação e fundo limpo</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            <span>Brandbook deve incluir paleta de cores, tipografia e tom de voz</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            <span>Nomeie os arquivos de forma descritiva (ex: logo-principal.png)</span>
-          </li>
-        </ul>
-      </Card>
+      {/* Assets Grid */}
+      {brand.assets.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {brand.assets.map((asset) => (
+            <Card key={asset.id} className="p-4">
+              <div className="relative h-48 w-full mb-4 rounded-lg overflow-hidden bg-muted">
+                {asset.type.startsWith("image/") && asset.url ? (
+                  <Image
+                    src={asset.url}
+                    alt={asset.name}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              <h3 className="font-medium mb-1 truncate">{asset.name}</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                {asset.size ? formatFileSize(asset.size) : "Tamanho desconhecido"}
+              </p>
+
+              <div className="flex gap-2">
+                <Button asChild size="sm" variant="outline" className="flex-1">
+                  <a href={asset.url} download target="_blank" rel="noopener">
+                    <Download className="h-4 w-4" />
+                  </a>
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="p-12">
+          <div className="flex flex-col items-center justify-center text-center">
+            <ImageIcon className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium mb-2">Nenhum asset ainda</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Faça upload de logos, fotos e outros arquivos da sua marca
+            </p>
+            <Button>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Primeiro Asset
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
