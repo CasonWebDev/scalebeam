@@ -193,9 +193,9 @@ export default function NewTemplatePage() {
         description: "Nossa equipe analisará o Key Visual e criará o template para aprovação.",
       })
 
-      // Redirecionar para a página do projeto
+      // Redirecionar para a página de solicitação de template
       setTimeout(() => {
-        window.location.href = `/client/projects/${project.id}`
+        window.location.href = `/client/template-requests/${project.id}`
       }, 1500)
     } catch (error: any) {
       console.error("Error creating template request:", error)
