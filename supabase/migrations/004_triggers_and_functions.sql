@@ -143,11 +143,11 @@ BEGIN
     FROM "Brand" b
     WHERE b.id = COALESCE(NEW."brandId", OLD."brandId");
   ELSIF TG_TABLE_NAME = 'Creative' THEN
+    -- Buscar diretamente usando NEW/OLD projectId
     SELECT b."organizationId" INTO v_organization_id
-    FROM "Creative" c
-    JOIN "Project" p ON p.id = c."projectId"
+    FROM "Project" p
     JOIN "Brand" b ON b.id = p."brandId"
-    WHERE c.id = COALESCE(NEW.id, OLD.id);
+    WHERE p.id = COALESCE(NEW."projectId", OLD."projectId");
   END IF;
 
   -- Atualizar updatedAt da organização
