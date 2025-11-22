@@ -11,6 +11,7 @@ import Link from "next/link"
 import { LayoutGrid, List, Search, TrendingUp, Clock, AlertCircle } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 
 type Brand = {
   id: string
@@ -210,7 +211,15 @@ export default function BrandsPage() {
             const agingColor = getAgingColor(lastProjectDate)
 
             return (
-              <Card key={brand.id} className="p-6 hover:bg-secondary/50 transition-colors">
+              <Card key={brand.id} className="p-6 hover:bg-secondary/50 transition-colors relative group">
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DeleteConfirmationDialog
+                    resourceType="Marca"
+                    resourceName={brand.name}
+                    endpoint={`/api/admin/brands/${brand.id}`}
+                    onSuccess={fetchBrands}
+                  />
+                </div>
                 <div className="flex items-start gap-4 mb-4">
                   {brand.logoUrl && (
                     <div className="relative h-16 w-16 flex-shrink-0 rounded-lg border border-border overflow-hidden bg-muted">
@@ -289,7 +298,7 @@ export default function BrandsPage() {
               const agingColor = getAgingColor(lastProjectDate)
 
               return (
-                <div key={brand.id} className="p-6 hover:bg-secondary/50 transition-colors">
+                <div key={brand.id} className="p-6 hover:bg-secondary/50 transition-colors group">
                   <div className="flex items-center gap-6">
                     {/* Logo */}
                     {brand.logoUrl && (
@@ -340,6 +349,16 @@ export default function BrandsPage() {
                         <div className="text-lg font-semibold">{brand._count.assets}</div>
                         <div className="text-xs text-muted-foreground">Assets</div>
                       </div>
+                    </div>
+
+                    {/* Delete Button */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DeleteConfirmationDialog
+                        resourceType="Marca"
+                        resourceName={brand.name}
+                        endpoint={`/api/admin/brands/${brand.id}`}
+                        onSuccess={fetchBrands}
+                      />
                     </div>
                   </div>
                 </div>
