@@ -148,13 +148,24 @@ export default async function BrandAssetsPage({
         </div>
       ) : (
         <Card className="p-12">
-          <div className="flex flex-col items-center justify-center text-center">
-            <ImageIcon className="h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">Nenhum asset ainda</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Faça upload de logos, fotos e outros arquivos da sua marca
+          <div className="flex flex-col items-center justify-center text-center max-w-2xl mx-auto">
+            <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mb-6">
+              <ImageIcon className="h-10 w-10 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Adicione assets da sua marca</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Faça upload de logos, fotos de produtos, imagens de campanhas e outros arquivos.
+              <br />
+              <strong>Nossa IA usará esses assets para criar criativos personalizados!</strong>
             </p>
             <UploadAssetModal brandId={brand.id} brandName={brand.name} />
+
+            <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg w-full">
+              <p className="text-xs text-blue-900 dark:text-blue-100">
+                <strong>💡 Dica:</strong> Quanto mais assets você fornecer (especialmente logos em alta resolução e fotos de produtos),
+                melhores e mais variados serão os criativos gerados pela nossa IA ScaleBeam!
+              </p>
+            </div>
           </div>
         </Card>
       )}

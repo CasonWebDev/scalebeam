@@ -7,6 +7,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { auth, signOut } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { FirstTimeOnboarding } from "@/components/first-time-onboarding"
+import { NoProjectsYet } from "@/components/no-projects-yet"
 
 export const dynamic = 'force-dynamic'
 
@@ -105,31 +107,55 @@ export default async function ClientDashboard() {
 
   const { organization, projects, stats, brands } = data
 
+  // User Header Component (reused in all views)
+  const UserHeader = () => (
+    <div className="flex items-center justify-between pb-4 border-b border-border">
+      <div>
+        <h2 className="text-sm font-medium text-muted-foreground">Área do Cliente</h2>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <p className="text-sm font-medium">{session.user.name}</p>
+          <p className="text-xs text-muted-foreground">{session.user.email}</p>
+        </div>
+        <form
+          action={async () => {
+            "use server"
+            await signOut({ redirectTo: "/login" })
+          }}
+        >
+          <Button type="submit" variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </Button>
+        </form>
+      </div>
+    </div>
+  )
+
+  // Empty state: No brands yet
+  if (stats.totalBrands === 0) {
+    return (
+      <div className="flex flex-col gap-6 p-8">
+        <UserHeader />
+        <FirstTimeOnboarding />
+      </div>
+    )
+  }
+
+  // Empty state: Has brands but no projects
+  if (stats.totalProjects === 0) {
+    return (
+      <div className="flex flex-col gap-6 p-8">
+        <UserHeader />
+        <NoProjectsYet brands={brands} />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6 p-8">
-      {/* User Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-border">
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground">Área do Cliente</h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-sm font-medium">{session.user.name}</p>
-            <p className="text-xs text-muted-foreground">{session.user.email}</p>
-          </div>
-          <form
-            action={async () => {
-              "use server"
-              await signOut({ redirectTo: "/login" })
-            }}
-          >
-            <Button type="submit" variant="outline" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </form>
-        </div>
-      </div>
+      <UserHeader />
 
       {/* Header */}
       <div>
