@@ -86,7 +86,7 @@ export function ProjectApprovalActions({
       }
 
       toast.success("Solicitação de ajustes enviada!", {
-        description: "A equipe UXER foi notificada sobre as revisões necessárias.",
+        description: "Nossa IA recebeu suas solicitações e processará os ajustes.",
       })
 
       setRevisionNotes("")
@@ -116,7 +116,7 @@ export function ProjectApprovalActions({
             <AlertDialogTitle>Solicitar Ajustes nos Criativos</AlertDialogTitle>
             <AlertDialogDescription>
               Descreva os ajustes que você gostaria que fossem feitos nos criativos.
-              A equipe UXER será notificada e trabalhará nas revisões solicitadas.
+              A IA ScaleBeam processará os ajustes solicitados e gerará novas versões.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

@@ -139,8 +139,8 @@ export default function NewProjectPage() {
 
       toast.success("Projeto criado com sucesso!", {
         description: requestNewTemplate
-          ? "O projeto foi criado. Solicitação de novo template enviada para a equipe UXER."
-          : "A equipe UXER foi notificada e começará o trabalho em breve.",
+          ? "Nossa IA começará a criar seu template personalizado baseado no Key Visual."
+          : "Nossa IA ScaleBeam está processando sua solicitação e criará os criativos em breve.",
       })
 
       // Redirecionar para a página do projeto
@@ -316,7 +316,7 @@ export default function NewProjectPage() {
               <div className="space-y-4">
                 <div className="p-4 bg-muted/50 rounded-lg border border-border">
                   <p className="text-sm text-muted-foreground">
-                    Ao solicitar um novo template, um projeto separado será criado para a equipe UXER desenvolver o template baseado no seu Key Visual. Após aprovação, você poderá usar esse template em projetos futuros.
+                    Ao solicitar um novo template, nossa IA analisará seu Key Visual e criará um template personalizado. Após aprovação, você poderá usar esse template em campanhas futuras.
                   </p>
                 </div>
 
@@ -457,7 +457,7 @@ Produto B,Oferta Limitada,Saiba Mais,R$ 149`}
 
           <Card className="p-4 bg-primary/10 border-primary/20">
             <p className="text-xs text-muted-foreground">
-              <strong>Nota:</strong> Após criar o projeto, a equipe UXER será notificada e começará a trabalhar nos criativos. Você receberá uma notificação quando estiverem prontos para aprovação.
+              <strong>Nota:</strong> Após criar o projeto, nossa IA começará a gerar os criativos automaticamente. Você será notificado quando estiverem prontos para aprovação.
             </p>
           </Card>
         </div>

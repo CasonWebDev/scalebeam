@@ -34,7 +34,7 @@ export function AddCommentForm({ projectId }: AddCommentFormProps) {
       }
 
       toast.success("Comentário adicionado!", {
-        description: "Sua mensagem foi enviada à equipe.",
+        description: "Seu feedback foi registrado no projeto.",
       })
 
       setComment("")

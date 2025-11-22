@@ -31,6 +31,17 @@ enum ProjectStatus {
   REVISION
 }
 
+enum ProjectType {
+  TEMPLATE_CREATION
+  CAMPAIGN
+}
+
+enum TemplateStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
 // Models
 model User {
   id            String   @id @default(cuid())
@@ -111,22 +122,27 @@ model Asset {
 }
 
 model Template {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  imageUrl    String   // Imagem de referência da campanha
-  category    String?  // banner, stories, feed, etc
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  imageUrl       String         // Imagem de referência da campanha
+  category       String?        // banner, stories, feed, etc
+  isActive       Boolean        @default(true)
+  templateStatus TemplateStatus @default(APPROVED)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  brandId     String
-  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId        String
+  brand          Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
-  projects    Project[]
+  projectId      String?        @unique
+  originProject  Project?       @relation("TemplateOrigin", fields: [projectId], references: [id], onDelete: SetNull)
+
+  projects       Project[]      @relation("TemplateProjects")
 
   @@index([brandId])
   @@index([isActive])
+  @@index([templateStatus])
 }
 
 model Project {
@@ -137,6 +153,7 @@ model Project {
   estimatedCreatives  Int           @default(0)
   totalCreatives      Int?          // Total de criativos do projeto
   status              ProjectStatus @default(DRAFT)
+  projectType         ProjectType   @default(CAMPAIGN)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -144,14 +161,16 @@ model Project {
   brand               Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   templateId          String?
-  template            Template?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  template            Template?     @relation("TemplateProjects", fields: [templateId], references: [id], onDelete: SetNull)
 
   creatives           Creative[]
   comments            Comment[]
+  generatedTemplate   Template?     @relation("TemplateOrigin")
 
   @@index([brandId])
   @@index([status])
   @@index([templateId])
+  @@index([projectType])
 }
 
 model Creative {

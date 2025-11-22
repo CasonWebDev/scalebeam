@@ -200,7 +200,7 @@ export default async function ClientProjectDetailPage({
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {project.status === "IN_PRODUCTION"
-                    ? "A equipe UXER está trabalhando nos criativos"
+                    ? "Nossa IA está gerando seus criativos"
                     : "Aguardando início do projeto"}
                 </p>
               </div>
