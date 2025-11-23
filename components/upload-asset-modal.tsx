@@ -48,13 +48,13 @@ export function UploadAssetModal({ brandId, brandName }: UploadAssetModalProps) 
       return
     }
 
-    // Verificar limite de 10MB do Supabase
-    const SUPABASE_LIMIT = 10 * 1024 * 1024 // 10MB
+    // Verificar limite de 50MB do Supabase
+    const SUPABASE_LIMIT = 50 * 1024 * 1024 // 50MB
     if (file.size > SUPABASE_LIMIT) {
       const fileSizeMB = (file.size / 1024 / 1024).toFixed(2)
-      setError(`Arquivo muito grande. O tamanho máximo permitido é 10MB. Seu arquivo tem ${fileSizeMB}MB.`)
+      setError(`Arquivo muito grande. O tamanho máximo permitido é 50MB. Seu arquivo tem ${fileSizeMB}MB.`)
       toast.error("Arquivo muito grande", {
-        description: `Tamanho máximo: 10MB. Seu arquivo: ${fileSizeMB}MB`,
+        description: `Tamanho máximo: 50MB. Seu arquivo: ${fileSizeMB}MB`,
       })
       return
     }
