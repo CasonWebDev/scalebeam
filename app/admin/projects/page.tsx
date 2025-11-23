@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { LogOut, FileText, Building2 } from "lucide-react"
+import { LogOut, FileText, Building2, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -128,75 +128,92 @@ export default async function AdminProjectsPage() {
                 {items.length})
               </h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {items.map((project) => (
-                  <Card
-                    key={project.id}
-                    className="p-6 hover:bg-secondary/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">
-                          {project.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {project.brand.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <Building2 className="h-3 w-3" />
-                          <span>{project.brand.organization.name}</span>
+                {items.map((project) => {
+                  const isTemplateRequest = project.projectType === "TEMPLATE_CREATION"
+                  const projectUrl = isTemplateRequest
+                    ? `/admin/template-requests/${project.id}`
+                    : `/admin/projects/${project.id}`
+
+                  return (
+                    <Card
+                      key={project.id}
+                      className={`p-6 hover:bg-secondary/50 transition-colors ${isTemplateRequest ? 'border-primary/50 bg-primary/5' : ''}`}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {isTemplateRequest && <Sparkles className="h-4 w-4 text-primary" />}
+                            <h3 className="font-semibold text-lg">
+                              {project.name}
+                            </h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {project.brand.name}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <Building2 className="h-3 w-3" />
+                            <span>{project.brand.organization.name}</span>
+                          </div>
+                          {isTemplateRequest && (
+                            <Badge variant="outline" className="mt-2 border-primary text-primary">
+                              Solicitação de Template
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    </div>
 
-                    {project.template && (
-                      <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-                        <FileText className="h-4 w-4" />
-                        <span>{project.template.name}</span>
+                      {project.template && !isTemplateRequest && (
+                        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+                          <FileText className="h-4 w-4" />
+                          <span>{project.template.name}</span>
+                        </div>
+                      )}
+
+                      {!isTemplateRequest && (
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border mb-4">
+                          <div>
+                            <span className="text-sm text-muted-foreground">
+                              Criativos
+                            </span>
+                            <p className="text-lg font-semibold">
+                              {project._count.creatives}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-muted-foreground">
+                              Comentários
+                            </span>
+                            <p className="text-lg font-semibold">
+                              {project._count.comments}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-xs text-muted-foreground mb-4">
+                        Criado{" "}
+                        {formatDistanceToNow(new Date(project.createdAt), {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
                       </div>
-                    )}
 
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border mb-4">
-                      <div>
-                        <span className="text-sm text-muted-foreground">
-                          Criativos
-                        </span>
-                        <p className="text-lg font-semibold">
-                          {project._count.creatives}
-                        </p>
+                      <div className="flex gap-2">
+                        <Button asChild className="flex-1">
+                          <Link href={projectUrl}>
+                            {isTemplateRequest ? 'Ver Solicitação' : 'Ver Detalhes'}
+                          </Link>
+                        </Button>
+                        <DeleteConfirmationDialog
+                          resourceType="Projeto"
+                          resourceName={project.name}
+                          endpoint={`/api/admin/projects/${project.id}`}
+                          variant="outline"
+                        />
                       </div>
-                      <div>
-                        <span className="text-sm text-muted-foreground">
-                          Comentários
-                        </span>
-                        <p className="text-lg font-semibold">
-                          {project._count.comments}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-muted-foreground mb-4">
-                      Criado{" "}
-                      {formatDistanceToNow(new Date(project.createdAt), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button asChild className="flex-1">
-                        <Link href={`/admin/projects/${project.id}`}>
-                          Ver Detalhes
-                        </Link>
-                      </Button>
-                      <DeleteConfirmationDialog
-                        resourceType="Projeto"
-                        resourceName={project.name}
-                        endpoint={`/api/admin/projects/${project.id}`}
-                        variant="outline"
-                      />
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  )
+                })}
               </div>
             </div>
           )
