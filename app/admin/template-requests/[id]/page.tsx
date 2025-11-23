@@ -143,36 +143,14 @@ export default async function AdminTemplateRequestPage({
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Details */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Request Info */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Informações da Solicitação</h2>
-            <div className="grid gap-4">
-              <div>
-                <span className="text-sm text-muted-foreground">Criado</span>
-                <p className="text-sm">
-                  {formatDistanceToNow(new Date(project.createdAt), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Última Atualização</span>
-                <p className="text-sm">
-                  {formatDistanceToNow(new Date(project.updatedAt), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Template Info */}
-          {project.template && (
-            <Card className="p-6">
+          {/* Key Visual - Destaque Principal */}
+          {project.template?.imageUrl && (
+            <Card className="p-6 border-2 border-primary/30 bg-primary/5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Template Solicitado</h2>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Key Visual (Referência Principal)
+                </h2>
                 <div className="flex items-center gap-2">
                   <Badge variant={templateStatusConfig[project.template.templateStatus].variant}>
                     {templateStatusConfig[project.template.templateStatus].label}
@@ -184,11 +162,35 @@ export default async function AdminTemplateRequestPage({
                   />
                 </div>
               </div>
+              <div className="relative aspect-video rounded-lg border-2 border-border overflow-hidden bg-white">
+                <Image
+                  src={project.template.imageUrl}
+                  alt={project.template.name}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </Card>
+          )}
+
+          {/* Template Info */}
+          {project.template && (
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Especificações do Template</h2>
 
               <div className="space-y-4">
-                <div>
-                  <span className="text-sm text-muted-foreground block mb-2">Nome do Template</span>
-                  <p className="font-medium">{project.template.name}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-muted-foreground block mb-2">Nome do Template</span>
+                    <p className="font-medium">{project.template.name}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground block mb-2">Status do Template</span>
+                    <Badge variant={templateStatusConfig[project.template.templateStatus].variant}>
+                      {templateStatusConfig[project.template.templateStatus].label}
+                    </Badge>
+                  </div>
                 </div>
 
                 {project.template.description && (
@@ -198,23 +200,9 @@ export default async function AdminTemplateRequestPage({
                   </div>
                 )}
 
-                {project.template.imageUrl && (
-                  <div>
-                    <span className="text-sm text-muted-foreground block mb-2">Key Visual (Referência)</span>
-                    <div className="relative aspect-video rounded-lg border border-border overflow-hidden bg-muted">
-                      <Image
-                        src={project.template.imageUrl}
-                        alt={project.template.name}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {platforms.length > 0 && (
                   <div>
-                    <span className="text-sm text-muted-foreground block mb-2">Plataformas</span>
+                    <span className="text-sm text-muted-foreground block mb-2">Plataformas Solicitadas</span>
                     <div className="flex flex-wrap gap-2">
                       {platforms.map((p) => (
                         <Badge key={p} variant="outline">
@@ -227,7 +215,7 @@ export default async function AdminTemplateRequestPage({
 
                 {formats.length > 0 && (
                   <div>
-                    <span className="text-sm text-muted-foreground block mb-2">Formatos</span>
+                    <span className="text-sm text-muted-foreground block mb-2">Formatos Solicitados</span>
                     <div className="flex flex-wrap gap-2">
                       {formats.map((f) => (
                         <Badge key={f} variant="outline">
@@ -240,6 +228,37 @@ export default async function AdminTemplateRequestPage({
               </div>
             </Card>
           )}
+
+          {/* Request Info */}
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Informações da Solicitação</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm text-muted-foreground block mb-1">Criado</span>
+                <p className="text-sm font-medium">
+                  {formatDistanceToNow(new Date(project.createdAt), {
+                    addSuffix: true,
+                    locale: ptBR,
+                  })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(project.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground block mb-1">Última Atualização</span>
+                <p className="text-sm font-medium">
+                  {formatDistanceToNow(new Date(project.updatedAt), {
+                    addSuffix: true,
+                    locale: ptBR,
+                  })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(project.updatedAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
+          </Card>
 
           {/* Process Guide for Admin */}
           <Card className="p-6 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
