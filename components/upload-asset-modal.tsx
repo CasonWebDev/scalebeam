@@ -82,7 +82,6 @@ export function UploadAssetModal({ brandId, brandName }: UploadAssetModalProps) 
           body: file,
           headers: {
             "Content-Type": file.type,
-            "x-upsert": "true",
           },
         })
 

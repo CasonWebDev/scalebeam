@@ -46,7 +46,9 @@ export async function POST(
     // Criar signed URL para upload direto (usando cliente admin)
     const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
       .from("assets")
-      .createSignedUploadUrl(filePath)
+      .createSignedUploadUrl(filePath, {
+        upsert: true,
+      })
 
     if (signedUrlError || !signedUrlData) {
       console.error("Error creating signed URL:", signedUrlError)
