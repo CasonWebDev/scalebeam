@@ -28,6 +28,9 @@ export default async function TemplatesPage() {
 
   const [templates, brands] = await Promise.all([
     prisma.template.findMany({
+      where: {
+        templateStatus: "APPROVED", // Apenas templates aprovados
+      },
       include: {
         brand: {
           select: {
@@ -69,9 +72,9 @@ export default async function TemplatesPage() {
           <div className="flex items-center gap-3">
             <Layers className="h-8 w-8 text-muted-foreground" />
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">Templates</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">Templates Aprovados</h1>
               <p className="text-muted-foreground mt-1">
-                Gerenciar templates de criativos
+                {templates.length} template(s) aprovado(s) e disponível(is) para uso
               </p>
             </div>
           </div>
@@ -170,7 +173,10 @@ export default async function TemplatesPage() {
         {templates.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12">
             <Layers className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">Nenhum template cadastrado</p>
+            <p className="text-muted-foreground">Nenhum template aprovado</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Templates pendentes devem ser aprovados através das solicitações de template
+            </p>
           </div>
         )}
       </Card>
