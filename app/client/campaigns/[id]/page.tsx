@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DownloadAllButton } from "@/components/creative-download-button"
 import { AddCommentForm } from "@/components/add-comment-form"
-import { CreativeApprovalGridGrouped } from "@/components/creative-approval-grid-grouped"
+import { CreativeApprovalGrid } from "@/components/creative-approval-grid"
 import { ProjectRefreshButton } from "@/components/project-refresh-button"
 import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
 
@@ -233,7 +233,7 @@ export default async function ClientProjectDetailPage({
                         Em processamento pela IA
                       </p>
                     </div>
-                    <CreativeApprovalGridGrouped
+                    <CreativeApprovalGrid
                       creatives={project.creatives}
                       projectId={project.id}
                       projectName={project.name}
@@ -265,7 +265,7 @@ export default async function ClientProjectDetailPage({
                   <strong>Revise os criativos:</strong> Analise cada criativo e aprove ou solicite ajustes conforme necessário.
                 </p>
               </div>
-              <CreativeApprovalGridGrouped
+              <CreativeApprovalGrid
                 creatives={project.creatives}
                 projectId={project.id}
                 projectName={project.name}
@@ -289,7 +289,7 @@ export default async function ClientProjectDetailPage({
                   <strong>Campanha aprovada!</strong> Seus criativos estão prontos para uso em suas campanhas de mídia.
                 </p>
               </div>
-              <CreativeApprovalGridGrouped
+              <CreativeApprovalGrid
                 creatives={project.creatives}
                 projectId={project.id}
                 projectName={project.name}

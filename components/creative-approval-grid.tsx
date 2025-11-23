@@ -122,24 +122,43 @@ export function CreativeApprovalGrid({
   const confirmApproval = async () => {
     setIsProcessing(true)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch(`/api/projects/${projectId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          comment: `Projeto aprovado com ${selectedCreatives.size} criativo(s)`,
+        }),
+      })
 
-    const count = selectedCreatives.size
-    toast.success(`${count} criativo${count > 1 ? 's' : ''} aprovado${count > 1 ? 's' : ''} com sucesso!`, {
-      description: count === creatives.length
-        ? `Todos os criativos do projeto "${projectName}" foram aprovados.`
-        : `${count} de ${creatives.length} criativos foram aprovados.`,
-    })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Falha ao aprovar projeto")
+      }
 
-    setIsProcessing(false)
-    setShowApproveDialog(false)
-    setSelectedCreatives(new Set())
+      const count = selectedCreatives.size
+      toast.success(`Projeto aprovado com sucesso!`, {
+        description: count === creatives.length
+          ? `Todos os ${count} criativos do projeto "${projectName}" foram aprovados.`
+          : `${count} de ${creatives.length} criativos foram aprovados.`,
+      })
 
-    // Simulate page reload
-    setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      setShowApproveDialog(false)
+      setSelectedCreatives(new Set())
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (error: any) {
+      toast.error("Erro ao aprovar projeto", {
+        description: error.message,
+      })
+      console.error(error)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const confirmRevision = async () => {
