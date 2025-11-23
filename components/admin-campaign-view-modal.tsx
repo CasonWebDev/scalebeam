@@ -259,6 +259,7 @@ export function AdminCampaignViewModal({
                     <AdminCreativeCategorization
                       creatives={campaign.creatives}
                       formatVariations={formatVariations}
+                      selectedFormats={selectedFormats}
                       onUpdate={fetchCampaign}
                     />
                   </TabsContent>

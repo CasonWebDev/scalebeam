@@ -3,10 +3,16 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Check, X, Edit2 } from "lucide-react"
 import { toast } from "sonner"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Creative {
   id: string
@@ -21,17 +27,49 @@ interface Creative {
 interface AdminCreativeCategorizationProps {
   creatives: Creative[]
   formatVariations: Record<string, number>
+  selectedFormats: string[]
   onUpdate: () => void
 }
+
+// Formatos disponíveis na plataforma
+const formatLabels: Record<string, string> = {
+  feed: "Feed",
+  stories: "Stories",
+  banner: "Banner",
+  carrossel: "Carrossel",
+  video: "Vídeo",
+  display: "Display Ads",
+}
+
+// Dimensões/aspectos de formato disponíveis
+const dimensionOptions = [
+  { value: "1:1", label: "1:1 (Quadrado - 1080x1080)" },
+  { value: "4:5", label: "4:5 (Vertical Feed - 1080x1350)" },
+  { value: "9:16", label: "9:16 (Stories/Reels - 1080x1920)" },
+  { value: "16:9", label: "16:9 (Horizontal - 1920x1080)" },
+  { value: "1200:628", label: "1200x628 (Facebook Link)" },
+  { value: "1080:1080", label: "1080x1080 (Instagram Feed)" },
+  { value: "google-display", label: "Google Display Ads" },
+  { value: "google-search", label: "Google Search Ads" },
+  { value: "linkedin-feed", label: "LinkedIn Feed" },
+  { value: "tiktok-video", label: "TikTok Video" },
+]
 
 export function AdminCreativeCategorization({
   creatives,
   formatVariations,
+  selectedFormats,
   onUpdate,
 }: AdminCreativeCategorizationProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<{ lista: string; modelo: string }>({ lista: "", modelo: "" })
   const [saving, setSaving] = useState(false)
+
+  // Lista de formatos selecionados na campanha para o dropdown
+  const listaOptions = selectedFormats.map((format) => ({
+    value: format,
+    label: formatLabels[format] || format,
+  }))
 
   const startEdit = (creative: Creative) => {
     setEditingId(creative.id)
@@ -125,39 +163,59 @@ export function AdminCreativeCategorization({
                     {isEditing ? (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label htmlFor={`lista-${creative.id}`} className="text-xs">
-                            Lista/Variação
+                          <Label htmlFor={`lista-${creative.id}`} className="text-xs mb-1 block">
+                            Tipo de Conteúdo
                           </Label>
-                          <Input
-                            id={`lista-${creative.id}`}
+                          <Select
                             value={editValues.lista}
-                            onChange={(e) => setEditValues({ ...editValues, lista: e.target.value })}
-                            placeholder="Ex: Lista 1, Variação A"
-                            className="h-8 text-sm"
-                          />
+                            onValueChange={(value) => setEditValues({ ...editValues, lista: value })}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="Selecione o tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {listaOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div>
-                          <Label htmlFor={`modelo-${creative.id}`} className="text-xs">
-                            Modelo/Template
+                          <Label htmlFor={`modelo-${creative.id}`} className="text-xs mb-1 block">
+                            Formato/Dimensão
                           </Label>
-                          <Input
-                            id={`modelo-${creative.id}`}
+                          <Select
                             value={editValues.modelo}
-                            onChange={(e) => setEditValues({ ...editValues, modelo: e.target.value })}
-                            placeholder="Ex: Modelo 1, Template A"
-                            className="h-8 text-sm"
-                          />
+                            onValueChange={(value) => setEditValues({ ...editValues, modelo: value })}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="Selecione a dimensão" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dimensionOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         <div>
-                          <span className="text-muted-foreground">Lista:</span>{" "}
-                          <span className="font-medium">{creative.lista || "Não definida"}</span>
+                          <span className="text-muted-foreground">Tipo:</span>{" "}
+                          <span className="font-medium">
+                            {creative.lista ? (formatLabels[creative.lista] || creative.lista) : "Não definido"}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Modelo:</span>{" "}
-                          <span className="font-medium">{creative.modelo || "Não definido"}</span>
+                          <span className="text-muted-foreground">Formato:</span>{" "}
+                          <span className="font-medium">
+                            {creative.modelo ? (dimensionOptions.find(d => d.value === creative.modelo)?.label || creative.modelo) : "Não definido"}
+                          </span>
                         </div>
                       </div>
                     )}
