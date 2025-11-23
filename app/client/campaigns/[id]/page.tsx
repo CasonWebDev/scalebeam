@@ -193,32 +193,59 @@ export default async function ClientProjectDetailPage({
           {/* Creatives Gallery - Conditional Rendering */}
           {project.status === "IN_PRODUCTION" ? (
             <Card className="p-6">
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-pulse flex flex-col items-center gap-4 mb-6">
-                  <div className="h-16 w-16 bg-primary/20 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="h-8 w-8 text-primary animate-bounce" />
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="animate-pulse flex flex-col items-center gap-4 mb-6">
+                    <div className="h-16 w-16 bg-linear-to-br from-primary/30 to-primary/10 rounded-full flex items-center justify-center">
+                      <CheckCircle2 className="h-8 w-8 text-primary animate-bounce" />
+                    </div>
+                    <div className="space-y-2 text-center">
+                      <h3 className="text-lg font-semibold">IA Gerando Criativos</h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        Nossa IA está gerando seus criativos em tempo real. Você pode acompanhar o progresso abaixo e visualizar os criativos conforme são criados.
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2 text-center">
-                    <h3 className="text-lg font-semibold">Produção em Andamento</h3>
-                    <p className="text-sm text-muted-foreground max-w-md">
-                      Nossa equipe está trabalhando nos criativos da sua campanha. Você será notificado quando estiverem prontos para revisão.
-                    </p>
+                  <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
+                    <div className="p-4 bg-muted rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Solicitados</p>
+                      <p className="text-2xl font-bold">{project.estimatedCreatives}</p>
+                    </div>
+                    <div className="p-4 bg-muted rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Gerados</p>
+                      <p className="text-2xl font-bold text-primary">{project.creatives.length}</p>
+                    </div>
+                    <div className="p-4 bg-muted rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Progresso</p>
+                      <p className="text-2xl font-bold">{Math.round((project.creatives.length / project.estimatedCreatives) * 100)}%</p>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
-                  <div className="p-4 bg-muted rounded-lg text-center">
-                    <p className="text-sm text-muted-foreground mb-1">Estimados</p>
-                    <p className="text-2xl font-bold">{project.estimatedCreatives}</p>
+
+                {/* Show partial creatives during production */}
+                {project.creatives.length > 0 && (
+                  <div className="border-t border-border pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">
+                        Criativos Gerados ({project.creatives.length})
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Em processamento pela IA
+                      </p>
+                    </div>
+                    <CreativeApprovalGridGrouped
+                      creatives={project.creatives}
+                      projectId={project.id}
+                      projectName={project.name}
+                      canApprove={false}
+                    />
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-xs text-blue-900 dark:text-blue-100">
+                        💡 <strong>Visualização Prévia:</strong> Estes criativos estão sendo gerados pela IA. Você poderá revisar e aprovar quando a produção estiver completa.
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-4 bg-muted rounded-lg text-center">
-                    <p className="text-sm text-muted-foreground mb-1">Produzidos</p>
-                    <p className="text-2xl font-bold text-primary">{project.creatives.length}</p>
-                  </div>
-                  <div className="p-4 bg-muted rounded-lg text-center">
-                    <p className="text-sm text-muted-foreground mb-1">Progresso</p>
-                    <p className="text-2xl font-bold">{Math.round((project.creatives.length / project.estimatedCreatives) * 100)}%</p>
-                  </div>
-                </div>
+                )}
               </div>
             </Card>
           ) : project.status === "READY" && project.creatives.length > 0 ? (
