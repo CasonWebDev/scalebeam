@@ -17,12 +17,23 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
 
+    const updateData: any = {}
+
+    // Atualizar apenas os campos fornecidos
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.description !== undefined) updateData.description = body.description || null
+    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl
+    if (body.category !== undefined) updateData.category = body.category || null
+    if (body.preliminaryContent !== undefined) updateData.preliminaryContent = body.preliminaryContent || null
+    if (body.restrictions !== undefined) updateData.restrictions = body.restrictions || null
+    if (body.platforms !== undefined) updateData.platforms = body.platforms || null
+    if (body.formats !== undefined) updateData.formats = body.formats || null
+    if (body.templateStatus !== undefined) updateData.templateStatus = body.templateStatus
+    if (body.isActive !== undefined) updateData.isActive = body.isActive
+
     const template = await prisma.template.update({
       where: { id },
-      data: {
-        templateStatus: body.templateStatus,
-        isActive: body.isActive,
-      },
+      data: updateData,
     })
 
     return NextResponse.json({ template })

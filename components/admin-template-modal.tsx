@@ -66,6 +66,8 @@ export function AdminTemplateModal({
     description: template?.description || "",
     brandId: template?.brandId || "",
     category: template?.category || "",
+    preliminaryContent: template?.preliminaryContent || "",
+    restrictions: template?.restrictions || "",
     templateStatus: template?.templateStatus || "APPROVED",
     isActive: template?.isActive ?? true,
     platforms: template?.platforms ? JSON.parse(template.platforms) : [],
@@ -284,6 +286,40 @@ export function AdminTemplateModal({
                 <option value="video">Vídeo</option>
                 <option value="display">Display</option>
               </select>
+            </div>
+
+            {/* Conteúdo Preliminar */}
+            <div className="grid gap-2">
+              <Label htmlFor="preliminaryContent">Conteúdo Preliminar</Label>
+              <Textarea
+                id="preliminaryContent"
+                value={formData.preliminaryContent}
+                onChange={(e) =>
+                  setFormData({ ...formData, preliminaryContent: e.target.value })
+                }
+                placeholder="Descreva os elementos de conteúdo que devem estar presentes no template. Ex: Título, Subtítulo, CTA, Descrição do produto, etc."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                Estrutura de conteúdo que será replicada nas adaptações do template
+              </p>
+            </div>
+
+            {/* Restrições */}
+            <div className="grid gap-2">
+              <Label htmlFor="restrictions">Restrições e Obrigatoriedades</Label>
+              <Textarea
+                id="restrictions"
+                value={formData.restrictions}
+                onChange={(e) =>
+                  setFormData({ ...formData, restrictions: e.target.value })
+                }
+                placeholder="Especifique restrições visuais, guidelines da marca, elementos obrigatórios, cores que não podem ser usadas, etc."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                Regras específicas que devem ser seguidas na criação do template
+              </p>
             </div>
 
             {/* Plataformas */}
