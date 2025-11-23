@@ -17,11 +17,13 @@ import { toast } from "sonner"
 interface UploadCreativesModalProps {
   projectId: string
   projectName: string
+  children?: React.ReactNode
 }
 
 export function UploadCreativesModal({
   projectId,
   projectName,
+  children,
 }: UploadCreativesModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -109,10 +111,12 @@ export function UploadCreativesModal({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Upload className="h-4 w-4 mr-2" />
-          Fazer Upload
-        </Button>
+        {children || (
+          <Button size="sm">
+            <Upload className="h-4 w-4 mr-2" />
+            Fazer Upload
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>

@@ -20,12 +20,14 @@ interface ProjectStatusChangeProps {
   projectId: string
   projectName: string
   currentStatus: string
+  children?: React.ReactNode
 }
 
 export function ProjectStatusChange({
   projectId,
   projectName,
   currentStatus,
+  children,
 }: ProjectStatusChangeProps) {
   const [isChanging, setIsChanging] = useState(false)
 
@@ -107,10 +109,12 @@ export function ProjectStatusChange({
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button size="sm" variant="default">
-            <Play className="h-4 w-4 mr-2" />
-            Iniciar Produção
-          </Button>
+          {children || (
+            <Button size="sm" variant="default">
+              <Play className="h-4 w-4 mr-2" />
+              Iniciar Produção
+            </Button>
+          )}
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -135,10 +139,12 @@ export function ProjectStatusChange({
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button size="sm" variant="default">
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Marcar como Pronto
-          </Button>
+          {children || (
+            <Button size="sm" variant="default">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Marcar como Pronto
+            </Button>
+          )}
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
