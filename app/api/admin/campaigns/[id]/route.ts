@@ -40,7 +40,6 @@ export async function GET(
         },
         creatives: {
           orderBy: { createdAt: "desc" },
-          take: 20, // Limit to 20 for modal
         },
         _count: {
           select: {

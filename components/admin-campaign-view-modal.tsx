@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, Download } from "lucide-react"
 import Image from "next/image"
+import { AdminCreativeCategorization } from "@/components/admin-creative-categorization"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const platformLabels: Record<string, string> = {
   facebook: "Facebook",
@@ -245,37 +247,54 @@ export function AdminCampaignViewModal({
                 </div>
               )}
 
-              {/* Creatives Preview */}
+              {/* Creatives Categorization */}
               {campaign.creatives && campaign.creatives.length > 0 && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground block mb-2">
-                    Criativos ({campaign.creatives.length})
-                  </span>
-                  <div className="grid grid-cols-4 gap-3">
-                    {campaign.creatives.slice(0, 8).map((creative: any) => (
-                      <div key={creative.id} className="relative aspect-square rounded border overflow-hidden bg-muted group">
-                        <Image
-                          src={creative.thumbnailUrl || creative.url}
-                          alt={creative.name}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button variant="secondary" size="sm" asChild>
-                            <a href={creative.url} target="_blank" rel="noopener noreferrer">
-                              Ver
-                            </a>
-                          </Button>
-                        </div>
+                <Tabs defaultValue="categorize" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="categorize">Categorizar Criativos</TabsTrigger>
+                    <TabsTrigger value="preview">Visualização Rápida</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="categorize" className="mt-4">
+                    <AdminCreativeCategorization
+                      creatives={campaign.creatives}
+                      formatVariations={formatVariations}
+                      onUpdate={fetchCampaign}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="preview" className="mt-4">
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground block mb-2">
+                        Criativos ({campaign.creatives.length})
+                      </span>
+                      <div className="grid grid-cols-4 gap-3">
+                        {campaign.creatives.slice(0, 12).map((creative: any) => (
+                          <div key={creative.id} className="relative aspect-square rounded border overflow-hidden bg-muted group">
+                            <Image
+                              src={creative.thumbnailUrl || creative.url}
+                              alt={creative.name}
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button variant="secondary" size="sm" asChild>
+                                <a href={creative.url} target="_blank" rel="noopener noreferrer">
+                                  Ver
+                                </a>
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  {campaign.creatives.length > 8 && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      +{campaign.creatives.length - 8} criativos adicionais
-                    </p>
-                  )}
-                </div>
+                      {campaign.creatives.length > 12 && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          +{campaign.creatives.length - 12} criativos adicionais
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               )}
             </div>
           </div>
