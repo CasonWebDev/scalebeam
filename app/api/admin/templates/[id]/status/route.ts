@@ -39,6 +39,13 @@ export async function PATCH(
         // Se aprovado, ativar template
         isActive: status === "APPROVED",
       },
+      include: {
+        brand: {
+          select: {
+            organizationId: true,
+          },
+        },
+      },
     })
 
     // Registrar atividade
@@ -47,7 +54,7 @@ export async function PATCH(
         action: "template_status_changed",
         description: `Status do template "${template.name}" alterado para ${status}`,
         userId: session!.user.id,
-        organizationId: null,
+        organizationId: template.brand.organizationId,
       },
     })
 
