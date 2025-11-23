@@ -4,11 +4,12 @@ import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Layers, Edit, Plus } from "lucide-react"
+import { Layers, Edit, Plus, Eye } from "lucide-react"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { AdminTemplateModal } from "@/components/admin-template-modal"
+import { AdminTemplateViewModal } from "@/components/admin-template-view-modal"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 
 export const dynamic = 'force-dynamic'
@@ -151,8 +152,13 @@ export default async function TemplatesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <AdminTemplateViewModal template={template}>
+                          <Button variant="ghost" size="icon" title="Visualizar">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </AdminTemplateViewModal>
                         <AdminTemplateModal mode="edit" template={template} brands={brands}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" title="Editar">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </AdminTemplateModal>
