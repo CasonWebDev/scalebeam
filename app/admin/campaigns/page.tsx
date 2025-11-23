@@ -4,11 +4,13 @@ import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Zap, Eye } from "lucide-react"
+import { Zap, Eye, Upload, Edit2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { AdminCampaignViewModal } from "@/components/admin-campaign-view-modal"
+import { UploadCreativesModal } from "@/components/upload-creatives-modal"
+import { ProjectStatusChange } from "@/components/project-status-change"
 
 export const dynamic = "force-dynamic"
 
@@ -139,12 +141,26 @@ export default async function AdminCampaignsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
                         <AdminCampaignViewModal campaignId={campaign.id}>
                           <Button variant="ghost" size="icon" title="Visualizar">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </AdminCampaignViewModal>
+                        <UploadCreativesModal projectId={campaign.id} projectName={campaign.name}>
+                          <Button variant="ghost" size="icon" title="Upload Criativos">
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        </UploadCreativesModal>
+                        <ProjectStatusChange
+                          projectId={campaign.id}
+                          projectName={campaign.name}
+                          currentStatus={campaign.status}
+                        >
+                          <Button variant="ghost" size="icon" title="Alterar Status">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </ProjectStatusChange>
                         <DeleteConfirmationDialog
                           resourceType="Campanha"
                           resourceName={campaign.name}

@@ -16,11 +16,31 @@ import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
 export const dynamic = 'force-dynamic'
 
 const statusConfig = {
-  DRAFT: { label: "Rascunho", variant: "secondary" as const },
-  IN_PRODUCTION: { label: "Em Produção", variant: "default" as const },
-  READY: { label: "Pronto para Aprovar", variant: "default" as const },
-  APPROVED: { label: "Aprovado", variant: "default" as const },
-  REVISION: { label: "Em Revisão", variant: "destructive" as const },
+  DRAFT: {
+    label: "Rascunho",
+    variant: "secondary" as const,
+    description: "Campanha em rascunho"
+  },
+  IN_PRODUCTION: {
+    label: "Produzindo...",
+    variant: "default" as const,
+    description: "Nossa equipe está produzindo os criativos da sua campanha"
+  },
+  READY: {
+    label: "Em Revisão",
+    variant: "default" as const,
+    description: "Criativos prontos para sua revisão e aprovação"
+  },
+  APPROVED: {
+    label: "Pronto",
+    variant: "default" as const,
+    description: "Campanha aprovada e pronta para uso"
+  },
+  REVISION: {
+    label: "Revisão Solicitada",
+    variant: "destructive" as const,
+    description: "Aguardando ajustes solicitados"
+  },
 }
 
 export default async function ClientProjectDetailPage({
@@ -170,29 +190,87 @@ export default async function ClientProjectDetailPage({
             </Card>
           )}
 
-          {/* Creatives Gallery */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                Criativos Entregues ({project.creatives.length})
-              </h2>
-              {project.creatives.length > 0 && (
+          {/* Creatives Gallery - Conditional Rendering */}
+          {project.status === "IN_PRODUCTION" ? (
+            <Card className="p-6">
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-pulse flex flex-col items-center gap-4 mb-6">
+                  <div className="h-16 w-16 bg-primary/20 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="h-8 w-8 text-primary animate-bounce" />
+                  </div>
+                  <div className="space-y-2 text-center">
+                    <h3 className="text-lg font-semibold">Produção em Andamento</h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Nossa equipe está trabalhando nos criativos da sua campanha. Você será notificado quando estiverem prontos para revisão.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
+                  <div className="p-4 bg-muted rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Estimados</p>
+                    <p className="text-2xl font-bold">{project.estimatedCreatives}</p>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Produzidos</p>
+                    <p className="text-2xl font-bold text-primary">{project.creatives.length}</p>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Progresso</p>
+                    <p className="text-2xl font-bold">{Math.round((project.creatives.length / project.estimatedCreatives) * 100)}%</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ) : project.status === "READY" && project.creatives.length > 0 ? (
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">
+                  Criativos para Revisar ({project.creatives.length})
+                </h2>
                 <DownloadAllButton
                   projectId={project.id}
                   projectName={project.name}
                   creativesCount={project.creatives.length}
                 />
-              )}
-            </div>
-
-            {project.creatives.length > 0 ? (
+              </div>
+              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>Revise os criativos:</strong> Analise cada criativo e aprove ou solicite ajustes conforme necessário.
+                </p>
+              </div>
               <CreativeApprovalGridGrouped
                 creatives={project.creatives}
                 projectId={project.id}
                 projectName={project.name}
                 canApprove={canApprove}
               />
-            ) : (
+            </Card>
+          ) : project.status === "APPROVED" && project.creatives.length > 0 ? (
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">
+                  Seus Criativos Aprovados ({project.creatives.length})
+                </h2>
+                <DownloadAllButton
+                  projectId={project.id}
+                  projectName={project.name}
+                  creativesCount={project.creatives.length}
+                />
+              </div>
+              <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <p className="text-sm text-green-900 dark:text-green-100">
+                  <strong>Campanha aprovada!</strong> Seus criativos estão prontos para uso em suas campanhas de mídia.
+                </p>
+              </div>
+              <CreativeApprovalGridGrouped
+                creatives={project.creatives}
+                projectId={project.id}
+                projectName={project.name}
+                canApprove={false}
+              />
+            </Card>
+          ) : (
+            <Card className="p-6">
               <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-lg">
                 <p className="text-muted-foreground">
                   {project.status === "DRAFT"
@@ -200,13 +278,11 @@ export default async function ClientProjectDetailPage({
                     : "Criativos ainda não foram entregues"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {project.status === "IN_PRODUCTION"
-                    ? "Nossa IA está gerando seus criativos"
-                    : "Aguardando início da campanha"}
+                  Aguardando início da produção
                 </p>
               </div>
-            )}
-          </Card>
+            </Card>
+          )}
         </div>
 
         {/* Right Column - Comments */}
