@@ -228,9 +228,9 @@ export default async function BrandDetailsPage({
       {/* Recent Projects */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Projetos Recentes</h2>
+          <h2 className="text-lg font-semibold">Campanhas Recentes</h2>
           <Button asChild variant="outline" size="sm">
-            <Link href="/client/projects">Ver Todos</Link>
+            <Link href="/client/campaigns">Ver Todas</Link>
           </Button>
         </div>
         {brand.projects.length > 0 ? (
@@ -242,7 +242,7 @@ export default async function BrandDetailsPage({
                   {project._count.creatives} criativos
                 </p>
                 <Button asChild size="sm" className="w-full">
-                  <Link href={`/client/projects/${project.id}`}>Ver Projeto</Link>
+                  <Link href={`/client/campaigns/${project.id}`}>Ver Campanha</Link>
                 </Button>
               </Card>
             ))}
@@ -250,7 +250,7 @@ export default async function BrandDetailsPage({
         ) : (
           <Card className="p-8">
             <p className="text-center text-muted-foreground">
-              Nenhum projeto criado ainda
+              Nenhuma campanha criada ainda
             </p>
           </Card>
         )}

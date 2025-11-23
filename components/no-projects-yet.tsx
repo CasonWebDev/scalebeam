@@ -48,14 +48,14 @@ export function NoProjectsYet({ brands }: NoProjectsYetProps) {
             <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
               <Zap className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">2. Crie seu primeiro projeto</h3>
+            <h3 className="font-semibold mb-2">2. Crie sua primeira campanha</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Nossa IA gerará criativos personalizados automaticamente
             </p>
             <Button size="sm" asChild className="w-full">
-              <Link href="/client/projects/new">
+              <Link href="/client/campaigns/new">
                 <Plus className="mr-2 h-4 w-4" />
-                Criar Projeto
+                Criar Campanha
               </Link>
             </Button>
           </Card>

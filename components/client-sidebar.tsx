@@ -2,15 +2,15 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Folder, Upload, FolderOpen, TrendingUp } from "lucide-react"
+import { LayoutDashboard, FileText, FolderOpen, TrendingUp, Sparkles, Megaphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 const navigation = [
   { name: "Dashboard", href: "/client", icon: LayoutDashboard, disabled: false },
   { name: "Minhas Marcas", href: "/client/brands", icon: FolderOpen, disabled: false },
-  { name: "Projetos", href: "/client/projects", icon: Folder, disabled: false },
-  { name: "Novo Projeto", href: "/client/projects/new", icon: Upload, disabled: false },
+  { name: "Templates", href: "/client/templates", icon: Sparkles, disabled: false },
+  { name: "Campanhas", href: "/client/campaigns", icon: Megaphone, disabled: false },
   { name: "Performance", href: "#", icon: TrendingUp, disabled: true },
 ]
 

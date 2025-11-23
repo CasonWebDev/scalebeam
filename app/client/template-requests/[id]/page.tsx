@@ -70,7 +70,7 @@ export default async function TemplateRequestPage({
 
   // Verificar se é realmente uma solicitação de template
   if (project.projectType !== "TEMPLATE_CREATION") {
-    redirect(`/client/projects/${id}`)
+    redirect(`/client/campaigns/${id}`)
   }
 
   const statusCfg = statusConfig[project.status]
@@ -116,7 +116,7 @@ export default async function TemplateRequestPage({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/client/projects">
+            <Link href="/client/templates">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Link>

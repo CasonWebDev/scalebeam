@@ -170,9 +170,9 @@ export default async function ClientDashboard() {
       {/* Quick Actions */}
       <div className="flex gap-3">
         <Button asChild>
-          <Link href="/client/projects/new">
+          <Link href="/client/campaigns/new">
             <Upload className="h-4 w-4 mr-2" />
-            Novo Projeto
+            Nova Campanha
           </Link>
         </Button>
         <Button variant="outline" asChild>
@@ -268,12 +268,12 @@ export default async function ClientDashboard() {
       {/* Recent Projects */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Projetos Recentes</h2>
+          <h2 className="text-lg font-semibold">Campanhas Recentes</h2>
           <Link
-            href="/client/projects"
+            href="/client/campaigns"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Ver todos →
+            Ver todas →
           </Link>
         </div>
         <div className="space-y-3">
@@ -283,7 +283,7 @@ export default async function ClientDashboard() {
             return (
               <Link
                 key={project.id}
-                href={`/client/projects/${project.id}`}
+                href={`/client/campaigns/${project.id}`}
                 className="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-secondary/50"
               >
                 <div className="flex items-center gap-4">
