@@ -122,25 +122,27 @@ model Asset {
 }
 
 model Template {
-  id             String         @id @default(cuid())
-  name           String
-  description    String?
-  imageUrl       String         // Imagem de referência da campanha
-  category       String?        // banner, stories, feed, etc
-  platforms      String?        // JSON array: ["facebook", "instagram", "google"]
-  formats        String?        // JSON array: ["feed", "stories", "banner"]
-  isActive       Boolean        @default(true)
-  templateStatus TemplateStatus @default(APPROVED)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id                  String         @id @default(cuid())
+  name                String
+  description         String?
+  imageUrl            String         // Key Visual - Imagem de referência principal
+  category            String?        // banner, stories, feed, etc
+  platforms           String?        // JSON array: ["facebook", "instagram", "google"]
+  formats             String?        // JSON array: ["feed", "stories", "banner"]
+  preliminaryContent  String?        // Conteúdo preliminar estrutural do template
+  restrictions        String?        // Restrições e obrigatoriedades
+  isActive            Boolean        @default(true)
+  templateStatus      TemplateStatus @default(APPROVED)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  brandId        String
-  brand          Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId             String
+  brand               Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
-  projectId      String?        @unique
-  originProject  Project?       @relation("TemplateOrigin", fields: [projectId], references: [id], onDelete: SetNull)
+  projectId           String?        @unique
+  originProject       Project?       @relation("TemplateOrigin", fields: [projectId], references: [id], onDelete: SetNull)
 
-  projects       Project[]      @relation("TemplateProjects")
+  projects            Project[]      @relation("TemplateProjects")
 
   @@index([brandId])
   @@index([isActive])
@@ -152,8 +154,12 @@ model Project {
   name                String
   briefingUrl         String?       // URL do arquivo de briefing (CSV, DOC, PDF, etc)
   briefingData        String?       // JSON string com dados parseados (se aplicável)
+  briefingContent     String?       // Conteúdo do briefing em texto (para campanhas)
   estimatedCreatives  Int           @default(0)
   totalCreatives      Int?          // Total de criativos do projeto
+  selectedPlatforms   String?       // JSON array das plataformas selecionadas (para campanhas)
+  selectedFormats     String?       // JSON array dos formatos selecionados (para campanhas)
+  observations        String?       // Observações, restrições ou obrigatoriedades (para campanhas)
   status              ProjectStatus @default(DRAFT)
   projectType         ProjectType   @default(CAMPAIGN)
   createdAt           DateTime      @default(now())

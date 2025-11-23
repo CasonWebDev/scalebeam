@@ -5,27 +5,9 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload, ArrowLeft } from "lucide-react"
+import { Upload, ArrowLeft, Info } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-
-const PLATFORMS = [
-  { id: "facebook", name: "Facebook" },
-  { id: "instagram", name: "Instagram" },
-  { id: "google", name: "Google Ads" },
-  { id: "tiktok", name: "TikTok" },
-  { id: "linkedin", name: "LinkedIn" },
-  { id: "youtube", name: "YouTube" },
-]
-
-const FORMATS = [
-  { id: "feed", name: "Feed (1080x1080)" },
-  { id: "stories", name: "Stories (1080x1920)" },
-  { id: "banner", name: "Banner (1200x628)" },
-  { id: "carrossel", name: "Carrossel" },
-  { id: "video", name: "Vídeo" },
-  { id: "display", name: "Display Ads" },
-]
 
 interface Brand {
   id: string
@@ -35,12 +17,11 @@ interface Brand {
 export default function NewTemplatePage() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [selectedBrandId, setSelectedBrandId] = useState("")
-  const [projectName, setProjectName] = useState("")
   const [templateName, setTemplateName] = useState("")
   const [templateDescription, setTemplateDescription] = useState("")
   const [keyVisualFile, setKeyVisualFile] = useState<File | null>(null)
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
-  const [selectedFormats, setSelectedFormats] = useState<string[]>([])
+  const [preliminaryContent, setPreliminaryContent] = useState("")
+  const [restrictions, setRestrictions] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -53,10 +34,6 @@ export default function NewTemplatePage() {
 
   const handleSubmit = async () => {
     // Validações
-    if (!projectName.trim()) {
-      toast.error("Por favor, insira o nome do projeto")
-      return
-    }
     if (!selectedBrandId) {
       toast.error("Por favor, selecione uma marca")
       return
@@ -69,12 +46,8 @@ export default function NewTemplatePage() {
       toast.error("Por favor, faça upload do Key Visual")
       return
     }
-    if (selectedPlatforms.length === 0) {
-      toast.error("Por favor, selecione pelo menos uma plataforma")
-      return
-    }
-    if (selectedFormats.length === 0) {
-      toast.error("Por favor, selecione pelo menos um formato")
+    if (!preliminaryContent.trim()) {
+      toast.error("Por favor, insira o conteúdo preliminar")
       return
     }
 
@@ -161,7 +134,7 @@ export default function NewTemplatePage() {
 
       // 2. Criar projeto de criação de template
       const projectData = {
-        name: projectName,
+        name: `Template: ${templateName}`, // Nome do projeto automaticamente gerado
         brandId: selectedBrandId,
         templateId: null, // Não tem template ainda - vai criar um novo
         estimatedCreatives: 0, // Templates não têm criativos estimados
@@ -169,8 +142,8 @@ export default function NewTemplatePage() {
           name: templateName,
           description: templateDescription || null,
           keyVisualUrl,
-          platforms: selectedPlatforms,
-          formats: selectedFormats,
+          preliminaryContent,
+          restrictions: restrictions || null,
         },
       }
 
@@ -230,19 +203,7 @@ export default function NewTemplatePage() {
             <h2 className="text-lg font-semibold mb-4">Informações Básicas</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Nome do Projeto *</label>
-                <Input
-                  placeholder="Ex: Solicitação Template Black Friday 2024"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Nome interno para identificar esta solicitação
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Marca *</label>
+                <label className="text-sm font-medium mb-2 block">Marca de Referência *</label>
                 <select
                   className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
                   value={selectedBrandId}
@@ -255,6 +216,9 @@ export default function NewTemplatePage() {
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  A marca que será utilizada como base para este template
+                </p>
               </div>
             </div>
           </Card>
@@ -318,64 +282,38 @@ export default function NewTemplatePage() {
             </div>
           </Card>
 
-          {/* Platforms & Formats */}
+          {/* Content & Restrictions */}
           <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Especificações do Template</h2>
+            <h2 className="text-lg font-semibold mb-4">Conteúdo e Especificações</h2>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Plataformas * - Onde os criativos serão veiculados
+                  Conteúdo Preliminar *
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {PLATFORMS.map((platform) => (
-                    <button
-                      key={platform.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedPlatforms(prev =>
-                          prev.includes(platform.id)
-                            ? prev.filter(p => p !== platform.id)
-                            : [...prev, platform.id]
-                        )
-                      }}
-                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                        selectedPlatforms.includes(platform.id)
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      {platform.name}
-                    </button>
-                  ))}
-                </div>
+                <Textarea
+                  placeholder="Descreva o conteúdo que deve aparecer no template. Ex: Título, Subtítulo, CTA, Descrição do produto, etc."
+                  value={preliminaryContent}
+                  onChange={(e) => setPreliminaryContent(e.target.value)}
+                  rows={6}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Especifique os elementos de conteúdo que devem estar presentes no template
+                </p>
               </div>
 
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Formatos * - Dimensões e tipos de criativos
+                  Restrições ou Obrigatoriedades (opcional)
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {FORMATS.map((format) => (
-                    <button
-                      key={format.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedFormats(prev =>
-                          prev.includes(format.id)
-                            ? prev.filter(f => f !== format.id)
-                            : [...prev, format.id]
-                        )
-                      }}
-                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                        selectedFormats.includes(format.id)
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      {format.name}
-                    </button>
-                  ))}
-                </div>
+                <Textarea
+                  placeholder="Especifique restrições visuais, guidelines da marca, elementos obrigatórios, cores que não podem ser usadas, etc."
+                  value={restrictions}
+                  onChange={(e) => setRestrictions(e.target.value)}
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Informe regras específicas que devem ser seguidas na criação do template
+                </p>
               </div>
             </div>
           </Card>
@@ -384,12 +322,8 @@ export default function NewTemplatePage() {
         {/* Right Column - Summary */}
         <div className="space-y-6">
           <Card className="p-6 sticky top-6">
-            <h2 className="text-lg font-semibold mb-4">Resumo</h2>
+            <h2 className="text-lg font-semibold mb-4">Resumo da Solicitação</h2>
             <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Projeto:</span>
-                <span className="font-medium">{projectName || "-"}</span>
-              </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Marca:</span>
                 <span className="font-medium">
@@ -397,29 +331,32 @@ export default function NewTemplatePage() {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Template:</span>
+                <span className="text-muted-foreground">Nome do Template:</span>
                 <span className="font-medium">{templateName || "-"}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Key Visual:</span>
-                <span className="font-medium">{keyVisualFile ? "Anexado" : "Pendente"}</span>
+                <span className="font-medium">{keyVisualFile ? "✓ Anexado" : "Pendente"}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Plataformas:</span>
-                <span className="font-medium">{selectedPlatforms.length || "0"}</span>
+                <span className="text-muted-foreground">Conteúdo:</span>
+                <span className="font-medium">{preliminaryContent ? "✓ Fornecido" : "Pendente"}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Formatos:</span>
-                <span className="font-medium">{selectedFormats.length || "0"}</span>
+                <span className="text-muted-foreground">Restrições:</span>
+                <span className="font-medium">{restrictions ? "✓ Fornecido" : "Nenhuma"}</span>
               </div>
             </div>
 
             <div className="border-t border-border my-4"></div>
 
             <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
-              <p className="text-xs text-blue-900 dark:text-blue-100">
-                <strong>ℹ️ Processo:</strong> Após o envio, nossa equipe analisará o Key Visual e criará
-                o template personalizado. Você receberá uma notificação quando estiver pronto para aprovação.
+              <p className="text-xs text-blue-900 dark:text-blue-100 leading-relaxed">
+                <strong className="flex items-center gap-1 mb-2">
+                  <Info className="h-3.5 w-3.5" />
+                  Como funciona:
+                </strong>
+                Nossa equipe criará múltiplos formatos (Feed, Stories, Banners, etc.) baseados no seu Key Visual, mantendo a essência visual e estrutura do conteúdo. Você será notificado quando o template estiver pronto para aprovação.
               </p>
             </div>
 
