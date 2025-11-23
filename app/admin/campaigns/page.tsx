@@ -54,7 +54,6 @@ export default async function AdminCampaignsPage() {
       _count: {
         select: {
           creatives: true,
-          comments: true,
         },
       },
     },
@@ -128,12 +127,7 @@ export default async function AdminCampaignsPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="text-sm font-semibold">{campaign._count.creatives}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {campaign._count.comments} comentário(s)
-                        </p>
-                      </div>
+                      <p className="text-sm font-semibold">{campaign._count.creatives}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm text-muted-foreground">

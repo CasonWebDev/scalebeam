@@ -3,12 +3,11 @@ import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, MessageSquare } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DownloadAllButton } from "@/components/creative-download-button"
-import { AddCommentForm } from "@/components/add-comment-form"
 import { CreativeApprovalGrid } from "@/components/creative-approval-grid"
 import { ProjectRefreshButton } from "@/components/project-refresh-button"
 import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
@@ -70,12 +69,6 @@ export default async function ClientProjectDetailPage({
       creatives: {
         orderBy: { createdAt: "desc" },
       },
-      comments: {
-        include: {
-          user: true,
-        },
-        orderBy: { createdAt: "desc" },
-      },
     },
   })
 
@@ -129,9 +122,7 @@ export default async function ClientProjectDetailPage({
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Creatives */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
           {/* Campaign Info */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Informações da Campanha</h2>
@@ -310,51 +301,6 @@ export default async function ClientProjectDetailPage({
               </div>
             </Card>
           )}
-        </div>
-
-        {/* Right Column - Comments */}
-        <div className="space-y-6">
-          {/* Comments */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Comentários ({project.comments.length})
-            </h2>
-
-            {canApprove && <AddCommentForm projectId={project.id} />}
-
-            <div className="space-y-4">
-              {project.comments.map((comment) => (
-                <div key={comment.id} className="rounded-lg border border-border p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-primary text-xs font-medium text-primary-foreground flex items-center justify-center">
-                        {comment.user.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{comment.user.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(comment.createdAt), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-sm">{comment.content}</p>
-                </div>
-              ))}
-
-              {project.comments.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhum comentário ainda
-                </p>
-              )}
-            </div>
-          </Card>
-
-        </div>
       </div>
     </div>
   )

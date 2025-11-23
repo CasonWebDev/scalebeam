@@ -45,7 +45,6 @@ export async function GET(
         _count: {
           select: {
             creatives: true,
-            comments: true,
           },
         },
       },
