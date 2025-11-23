@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -10,8 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Upload } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Upload, Link as LinkIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface UploadAssetModalProps {
   brandId: string
@@ -23,6 +27,12 @@ export function UploadAssetModal({ brandId, brandName }: UploadAssetModalProps) 
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Link externo
+  const [linkName, setLinkName] = useState("")
+  const [linkUrl, setLinkUrl] = useState("")
+  const [addingLink, setAddingLink] = useState(false)
+
   const router = useRouter()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,13 +123,60 @@ export function UploadAssetModal({ brandId, brandName }: UploadAssetModalProps) 
         }
       }
 
+      toast.success("Arquivo enviado com sucesso!")
       setOpen(false)
       setFile(null)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao fazer upload")
+      toast.error("Erro ao fazer upload")
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleAddLink = async () => {
+    if (!linkName.trim() || !linkUrl.trim()) {
+      setError("Por favor, preencha o nome e a URL")
+      return
+    }
+
+    // Validar URL
+    try {
+      new URL(linkUrl)
+    } catch {
+      setError("Por favor, insira uma URL válida")
+      return
+    }
+
+    setAddingLink(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/brands/${brandId}/assets/link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: linkName,
+          url: linkUrl,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Erro ao adicionar link")
+      }
+
+      toast.success("Link adicionado com sucesso!")
+      setOpen(false)
+      setLinkName("")
+      setLinkUrl("")
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao adicionar link")
+      toast.error("Erro ao adicionar link")
+    } finally {
+      setAddingLink(false)
     }
   }
 
@@ -128,62 +185,123 @@ export function UploadAssetModal({ brandId, brandName }: UploadAssetModalProps) 
       <DialogTrigger asChild>
         <Button>
           <Upload className="h-4 w-4 mr-2" />
-          Upload Assets
+          Adicionar Asset
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Upload Asset</DialogTitle>
+          <DialogTitle>Adicionar Asset</DialogTitle>
           <DialogDescription>
-            Faça upload de logos, fotos ou outros arquivos para {brandName}
+            Faça upload de arquivos ou adicione links para bancos de imagem externos
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="file-upload"
-              className="block text-sm font-medium mb-2"
-            >
-              Selecione um arquivo
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              onChange={handleFileChange}
-              accept="image/*,.pdf"
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-lg file:border-0
-                file:text-sm file:font-semibold
-                file:bg-primary file:text-primary-foreground
-                hover:file:bg-primary/90
-                cursor-pointer"
-            />
-            {file && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Arquivo selecionado: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload
+            </TabsTrigger>
+            <TabsTrigger value="link">
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Link Externo
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="upload" className="space-y-4 mt-4">
+            <div>
+              <Label htmlFor="file-upload" className="text-sm font-medium mb-2 block">
+                Selecione um arquivo
+              </Label>
+              <input
+                id="file-upload"
+                type="file"
+                onChange={handleFileChange}
+                accept="image/*,.pdf,video/*"
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-lg file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-primary file:text-primary-foreground
+                  hover:file:bg-primary/90
+                  cursor-pointer"
+              />
+              {file && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Arquivo selecionado: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
             )}
-          </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={uploading}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleUpload} disabled={!file || uploading}>
+                {uploading ? "Enviando..." : "Upload"}
+              </Button>
+            </div>
+          </TabsContent>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={uploading}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleUpload} disabled={!file || uploading}>
-              {uploading ? "Enviando..." : "Upload"}
-            </Button>
-          </div>
-        </div>
+          <TabsContent value="link" className="space-y-4 mt-4">
+            <div>
+              <Label htmlFor="link-name" className="text-sm font-medium mb-2 block">
+                Nome do Asset
+              </Label>
+              <Input
+                id="link-name"
+                type="text"
+                placeholder="Ex: Banco de Imagens Google Drive"
+                value={linkName}
+                onChange={(e) => setLinkName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="link-url" className="text-sm font-medium mb-2 block">
+                URL
+              </Label>
+              <Input
+                id="link-url"
+                type="url"
+                placeholder="https://drive.google.com/..."
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Cole o link para Google Drive, OneDrive, Dropbox, ou outro serviço
+              </p>
+            </div>
+
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={addingLink}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleAddLink}
+                disabled={!linkName.trim() || !linkUrl.trim() || addingLink}
+              >
+                {addingLink ? "Adicionando..." : "Adicionar Link"}
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

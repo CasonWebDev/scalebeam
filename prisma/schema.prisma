@@ -108,12 +108,13 @@ model Brand {
 }
 
 model Asset {
-  id          String   @id @default(cuid())
-  name        String
-  url         String
-  type        String   // image, pdf, video
-  size        Int?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  url            String
+  type           String   // image, pdf, video, link
+  size           Int?
+  isExternalLink Boolean  @default(false) // true para links externos (Drive, OneDrive, etc)
+  createdAt      DateTime @default(now())
 
   brandId     String
   brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
