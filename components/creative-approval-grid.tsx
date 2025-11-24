@@ -44,7 +44,6 @@ export function CreativeApprovalGrid({
   canApprove,
 }: CreativeApprovalGridProps) {
   const [selectedCreatives, setSelectedCreatives] = useState<Set<string>>(new Set())
-  const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRevisionDialog, setShowRevisionDialog] = useState(false)
   const [revisionNotes, setRevisionNotes] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -98,67 +97,12 @@ export function CreativeApprovalGrid({
     setSelectedCreatives(newSelected)
   }
 
-  const handleApproveAll = () => {
-    setSelectedCreatives(new Set(creatives.map(c => c.id)))
-    setShowApproveDialog(true)
-  }
-
-  const handleApproveSelected = () => {
-    if (selectedCreatives.size === 0) {
-      toast.error("Selecione pelo menos um criativo para aprovar")
-      return
-    }
-    setShowApproveDialog(true)
-  }
-
   const handleRequestRevision = () => {
     if (selectedCreatives.size === 0) {
       toast.error("Selecione pelo menos um criativo para solicitar ajustes")
       return
     }
     setShowRevisionDialog(true)
-  }
-
-  const confirmApproval = async () => {
-    setIsProcessing(true)
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/approve`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          comment: `Projeto aprovado com ${selectedCreatives.size} criativo(s)`,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Falha ao aprovar projeto")
-      }
-
-      const count = selectedCreatives.size
-      toast.success(`Projeto aprovado com sucesso!`, {
-        description: count === creatives.length
-          ? `Todos os ${count} criativos do projeto "${projectName}" foram aprovados.`
-          : `${count} de ${creatives.length} criativos foram aprovados.`,
-      })
-
-      setShowApproveDialog(false)
-      setSelectedCreatives(new Set())
-
-      setTimeout(() => {
-        window.location.reload()
-      }, 1500)
-    } catch (error: any) {
-      toast.error("Erro ao aprovar projeto", {
-        description: error.message,
-      })
-      console.error(error)
-    } finally {
-      setIsProcessing(false)
-    }
   }
 
   const confirmRevision = async () => {
@@ -349,30 +293,12 @@ export function CreativeApprovalGrid({
 
           <div className="flex gap-2">
             <Button
-              variant="outline"
               size="sm"
               onClick={handleRequestRevision}
               disabled={selectedCreatives.size === 0}
-              className="text-destructive"
             >
-              <X className="h-4 w-4 mr-2" />
-              Solicitar Ajustes
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleApproveSelected}
-              disabled={selectedCreatives.size === 0}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Aprovar Selecionados
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleApproveAll}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Aprovar Todos
+              <Zap className="h-4 w-4 mr-2" />
+              Solicitar Ajustes à IA
             </Button>
           </div>
         </div>
@@ -470,47 +396,30 @@ export function CreativeApprovalGrid({
         </div>
       )}
 
-      {/* Approve Dialog */}
-      <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Aprovar Criativos</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você está prestes a aprovar {selectedCreatives.size === creatives.length ? "todos os" : `${selectedCreatives.size}`} criativos
-              {selectedCreatives.size === creatives.length ? "" : ` de ${creatives.length}`}.
-              Esta ação confirmará que você está satisfeito com o trabalho entregue.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button onClick={confirmApproval} disabled={isProcessing}>
-              {isProcessing ? "Aprovando..." : "Confirmar Aprovação"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Revision Dialog */}
       <AlertDialog open={showRevisionDialog} onOpenChange={setShowRevisionDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Solicitar Ajustes nos Criativos</AlertDialogTitle>
+            <AlertDialogTitle>💬 Solicitar Ajustes à IA</AlertDialogTitle>
             <AlertDialogDescription>
-              Você selecionou {selectedCreatives.size} criativo{selectedCreatives.size > 1 ? 's' : ''} para ajustes.
-              Nossa IA irá processar suas solicitações e gerar novas versões otimizadas.
+              Você selecionou {selectedCreatives.size} criativo{selectedCreatives.size > 1 ? 's' : ''}.
+              Descreva as mudanças que deseja e nossa IA irá gerar novas versões otimizadas instantaneamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="my-4">
             <label className="text-sm font-medium mb-2 block">
-              Descrição dos ajustes necessários
+              O que você gostaria de ajustar?
             </label>
             <textarea
               className="w-full min-h-[120px] rounded-lg border border-border bg-background p-3 text-sm resize-none"
-              placeholder="Ex: Ajustar cores do CTA, aumentar tamanho do logo, corrigir texto do produto..."
+              placeholder="Ex: 'Deixar o CTA mais destacado', 'Aumentar o tamanho do logo', 'Mudar a cor de fundo para azul'..."
               value={revisionNotes}
               onChange={(e) => setRevisionNotes(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 Seja específico! Quanto mais detalhes, melhores serão os novos criativos gerados pela IA.
+            </p>
           </div>
 
           <AlertDialogFooter>
@@ -518,9 +427,8 @@ export function CreativeApprovalGrid({
             <Button
               onClick={confirmRevision}
               disabled={isProcessing || !revisionNotes.trim()}
-              className="bg-destructive hover:bg-destructive/90"
             >
-              {isProcessing ? "Enviando..." : "Enviar Solicitação"}
+              {isProcessing ? "Processando..." : "Gerar Novas Versões"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

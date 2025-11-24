@@ -90,11 +90,10 @@ export default async function CampaignDetailPage({
   const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
   const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
   const Icon = config.icon
-  // Cliente pode aprovar quando houver criativos e não estiver aprovado
-  const canApprove = campaign.status === "IN_PRODUCTION" && campaign.creatives.length > 0
   const isGenerating = campaign.status === "IN_PRODUCTION"
-  const isApproved = campaign.status === "APPROVED"
   const hasCreatives = campaign.creatives.length > 0
+  // Cliente não precisa aprovar - apenas pode solicitar ajustes quando houver criativos
+  const canRequestChanges = hasCreatives
 
   // Parse briefing data
   let briefingData: any[] = []
@@ -264,41 +263,18 @@ export default async function CampaignDetailPage({
           {hasCreatives ? (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">
-                  {isGenerating && "Criativos Gerados"}
-                  {canApprove && "Criativos para Revisar"}
-                  {isApproved && "Seus Criativos Aprovados"}
-                </h2>
-                {(canApprove || isApproved) && (
-                  <DownloadAllButton
-                    projectId={campaign.id}
-                    projectName={campaign.name}
-                    creativesCount={campaign.creatives.length}
-                  />
-                )}
+                <h2 className="text-lg font-semibold">Seus Criativos</h2>
+                <DownloadAllButton
+                  projectId={campaign.id}
+                  projectName={campaign.name}
+                  creativesCount={campaign.creatives.length}
+                />
               </div>
 
-              {isGenerating && (
+              {hasCreatives && (
                 <div className="mb-4 p-4 border-2 border-blue-300 bg-blue-50/50 rounded-lg">
                   <p className="text-sm text-blue-900">
-                    <strong>Visualização Prévia:</strong> Estes criativos estão sendo gerados pela IA.
-                    Você poderá revisar e aprovar quando a produção estiver completa.
-                  </p>
-                </div>
-              )}
-
-              {canApprove && (
-                <div className="mb-4 p-4 border-2 border-amber-300 bg-amber-50/50 rounded-lg">
-                  <p className="text-sm text-amber-900">
-                    <strong>Revise os criativos:</strong> Analise cada criativo e aprove ou solicite ajustes conforme necessário.
-                  </p>
-                </div>
-              )}
-
-              {isApproved && (
-                <div className="mb-4 p-4 border-2 border-green-300 bg-green-50/50 rounded-lg">
-                  <p className="text-sm text-green-900">
-                    <strong>Campanha aprovada!</strong> Seus criativos estão prontos para uso em suas campanhas de mídia.
+                    <strong>💬 Solicite ajustes:</strong> Selecione os criativos que deseja melhorar e descreva as mudanças. Nossa IA irá gerar novas versões otimizadas.
                   </p>
                 </div>
               )}
@@ -307,7 +283,7 @@ export default async function CampaignDetailPage({
                 creatives={campaign.creatives}
                 projectId={campaign.id}
                 projectName={campaign.name}
-                canApprove={canApprove}
+                canApprove={canRequestChanges}
               />
             </Card>
           ) : (
