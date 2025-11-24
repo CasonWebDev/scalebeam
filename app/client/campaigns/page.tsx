@@ -1,55 +1,57 @@
 import { prisma } from "@/lib/prisma"
-import { auth, signOut } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, LogOut, FileText, Sparkles } from "lucide-react"
+import { Plus, Zap, Clock, CheckCircle2, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { PROJECT_STATUS_CONFIG } from "@/lib/constants"
-import { ProjectsFiltersForm } from "./filters-form"
 
 export const dynamic = "force-dynamic"
 
-interface ProjectsPageProps {
-  searchParams: Promise<{
-    search?: string
-    status?: string
-    brand?: string
-  }>
+const STATUS_CONFIG = {
+  DRAFT: {
+    label: "Rascunho",
+    icon: Clock,
+    color: "bg-gray-100 text-gray-700 border-gray-300",
+    description: "Campanha em preparação"
+  },
+  IN_PRODUCTION: {
+    label: "IA Gerando",
+    icon: Zap,
+    color: "bg-blue-100 text-blue-700 border-blue-300",
+    description: "Nossa IA está criando seus criativos"
+  },
+  READY: {
+    label: "Revisar",
+    icon: AlertTriangle,
+    color: "bg-amber-100 text-amber-700 border-amber-300",
+    description: "Criativos prontos para sua aprovação"
+  },
+  APPROVED: {
+    label: "Aprovado",
+    icon: CheckCircle2,
+    color: "bg-green-100 text-green-700 border-green-300",
+    description: "Campanha aprovada e pronta"
+  },
+  REVISION: {
+    label: "Processando",
+    icon: Zap,
+    color: "bg-purple-100 text-purple-700 border-purple-300",
+    description: "IA processando seus ajustes"
+  },
 }
 
-async function getClientProjects(
-  organizationIds: string[],
-  filters: { search?: string; status?: string; brand?: string }
-) {
-  const whereClause: any = {
-    brand: {
-      organizationId: { in: organizationIds },
+async function getCampaigns(organizationIds: string[]) {
+  return prisma.project.findMany({
+    where: {
+      brand: {
+        organizationId: { in: organizationIds },
+      },
+      projectType: "CAMPAIGN",
     },
-    // Apenas campanhas (não template requests)
-    projectType: "CAMPAIGN",
-  }
-
-  if (filters.search) {
-    whereClause.name = {
-      contains: filters.search,
-      mode: "insensitive",
-    }
-  }
-
-  if (filters.status) {
-    whereClause.status = filters.status
-  }
-
-  if (filters.brand) {
-    whereClause.brandId = filters.brand
-  }
-
-  const projects = await prisma.project.findMany({
-    where: whereClause,
     include: {
       brand: {
         select: {
@@ -61,6 +63,7 @@ async function getClientProjects(
       template: {
         select: {
           name: true,
+          imageUrl: true,
         },
       },
       _count: {
@@ -70,32 +73,14 @@ async function getClientProjects(
         },
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
-
-  return projects
-}
-
-async function getClientBrands(organizationIds: string[]) {
-  return prisma.brand.findMany({
-    where: {
-      organizationId: { in: organizationIds },
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
+    orderBy: [
+      { status: "asc" },
+      { updatedAt: "desc" },
+    ],
   })
 }
 
-export default async function ClientProjectsPage({
-  searchParams,
-}: ProjectsPageProps) {
+export default async function ClientCampaignsPage() {
   const session = await auth()
 
   if (!session?.user) {
@@ -106,153 +91,212 @@ export default async function ClientProjectsPage({
     redirect("/admin")
   }
 
-  const params = await searchParams
-  const projects = await getClientProjects(session.user.organizationIds, params)
-  const brands = await getClientBrands(session.user.organizationIds)
+  const campaigns = await getCampaigns(session.user.organizationIds)
+
+  // Agrupar por status
+  const needsAction = campaigns.filter(c => c.status === "READY")
+  const inProgress = campaigns.filter(c => c.status === "IN_PRODUCTION" || c.status === "REVISION")
+  const completed = campaigns.filter(c => c.status === "APPROVED")
+  const drafts = campaigns.filter(c => c.status === "DRAFT")
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      {/* User Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-border">
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Área do Cliente
-          </h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-sm font-medium">{session.user.name}</p>
-            <p className="text-xs text-muted-foreground">{session.user.email}</p>
-          </div>
-          <form
-            action={async () => {
-              "use server"
-              await signOut({ redirectTo: "/login" })
-            }}
-          >
-            <Button type="submit" variant="outline" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </form>
-        </div>
-      </div>
-
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Minhas Campanhas</h1>
           <p className="text-muted-foreground mt-1">
-            {projects.length} campanha(s) encontrada(s)
+            {campaigns.length} campanha{campaigns.length !== 1 ? "s" : ""} no total
           </p>
         </div>
-        <Button asChild>
+        <Button asChild size="lg">
           <Link href="/client/campaigns/new">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-5 w-5 mr-2" />
             Nova Campanha
           </Link>
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <ProjectsFiltersForm brands={brands} />
-      </Card>
+      {/* Status Overview */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="p-4 border-amber-200 bg-amber-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-100">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Precisa Revisar</p>
+              <p className="text-2xl font-bold text-amber-700">{needsAction.length}</p>
+            </div>
+          </div>
+        </Card>
 
-      {/* Projects Grid */}
-      {projects.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => {
-            const isTemplateRequest = project.projectType === "TEMPLATE_CREATION"
-            const projectUrl = isTemplateRequest
-              ? `/client/template-requests/${project.id}`
-              : `/client/campaigns/${project.id}`
+        <Card className="p-4 border-blue-200 bg-blue-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100">
+              <Zap className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">IA Trabalhando</p>
+              <p className="text-2xl font-bold text-blue-700">{inProgress.length}</p>
+            </div>
+          </div>
+        </Card>
 
-            return (
-              <Card
-                key={project.id}
-                className={`p-6 hover:bg-secondary/50 transition-colors ${isTemplateRequest ? 'border-primary/50 bg-primary/5' : ''}`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      {isTemplateRequest && <Sparkles className="h-4 w-4 text-primary" />}
-                      <h3 className="font-semibold text-lg">{project.name}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {project.brand.name}
-                    </p>
-                    {isTemplateRequest && (
-                      <Badge variant="outline" className="mt-2 border-primary text-primary">
-                        Solicitação de Template
-                      </Badge>
-                    )}
-                  </div>
-                  <Badge className={PROJECT_STATUS_CONFIG[project.status].color}>
-                    {PROJECT_STATUS_CONFIG[project.status].label}
-                  </Badge>
-                </div>
+        <Card className="p-4 border-green-200 bg-green-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Aprovadas</p>
+              <p className="text-2xl font-bold text-green-700">{completed.length}</p>
+            </div>
+          </div>
+        </Card>
 
-                {project.template && !isTemplateRequest && (
-                  <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-                    <FileText className="h-4 w-4" />
-                    <span>{project.template.name}</span>
-                  </div>
-                )}
+        <Card className="p-4 border-gray-200 bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gray-100">
+              <Clock className="h-5 w-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Rascunhos</p>
+              <p className="text-2xl font-bold text-gray-700">{drafts.length}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
 
-                {!isTemplateRequest && (
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border mb-4">
-                    <div>
-                      <span className="text-sm text-muted-foreground">Criativos</span>
-                      <p className="text-lg font-semibold">
-                        {project._count.creatives}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">Comentários</span>
-                      <p className="text-lg font-semibold">
-                        {project._count.comments}
-                      </p>
-                    </div>
-                  </div>
-                )}
+      {/* Campaigns List */}
+      {campaigns.length > 0 ? (
+        <div className="space-y-6">
+          {/* Needs Action Section */}
+          {needsAction.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                Aguardando Sua Aprovação ({needsAction.length})
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {needsAction.map((campaign) => (
+                  <CampaignCard key={campaign.id} campaign={campaign} />
+                ))}
+              </div>
+            </div>
+          )}
 
-                <div className="text-xs text-muted-foreground mb-4">
-                  Criado{" "}
-                  {formatDistanceToNow(new Date(project.createdAt), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </div>
+          {/* In Progress Section */}
+          {inProgress.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-blue-600" />
+                Em Produção ({inProgress.length})
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {inProgress.map((campaign) => (
+                  <CampaignCard key={campaign.id} campaign={campaign} />
+                ))}
+              </div>
+            </div>
+          )}
 
-                <Button asChild className="w-full">
-                  <Link href={projectUrl}>
-                    {isTemplateRequest ? 'Ver Solicitação' : 'Ver Detalhes'}
-                  </Link>
-                </Button>
-              </Card>
-            )
-          })}
+          {/* Completed Section */}
+          {completed.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                Campanhas Aprovadas ({completed.length})
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {completed.map((campaign) => (
+                  <CampaignCard key={campaign.id} campaign={campaign} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Drafts Section */}
+          {drafts.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-gray-600" />
+                Rascunhos ({drafts.length})
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {drafts.map((campaign) => (
+                  <CampaignCard key={campaign.id} campaign={campaign} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center">
-            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">Nenhuma campanha encontrada</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              {params.search || params.status || params.brand
-                ? "Tente ajustar os filtros"
-                : "Crie sua primeira campanha para começar"}
+            <Zap className="h-16 w-16 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhuma campanha ainda</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md">
+              Crie sua primeira campanha e deixe nossa IA gerar criativos incríveis para você
             </p>
-            <Button asChild>
+            <Button asChild size="lg">
               <Link href="/client/campaigns/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Campanha
+                <Plus className="h-5 w-5 mr-2" />
+                Criar Primeira Campanha
               </Link>
             </Button>
           </div>
         </Card>
       )}
     </div>
+  )
+}
+
+function CampaignCard({ campaign }: { campaign: any }) {
+  const config = STATUS_CONFIG[campaign.status as keyof typeof STATUS_CONFIG]
+  const Icon = config.icon
+
+  return (
+    <Link href={`/client/campaigns/${campaign.id}`}>
+      <Card className="p-6 hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer h-full">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-1">{campaign.name}</h3>
+            <p className="text-sm text-muted-foreground">{campaign.brand.name}</p>
+          </div>
+          <div className={`p-2 rounded-lg ${config.color.split(" ")[0]}`}>
+            <Icon className={`h-5 w-5 ${config.color.split(" ")[1]}`} />
+          </div>
+        </div>
+
+        <div className={`px-3 py-2 rounded-lg border mb-4 ${config.color}`}>
+          <p className="text-xs font-medium">{config.description}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+          <div>
+            <p className="text-xs text-muted-foreground">Criativos</p>
+            <p className="text-lg font-semibold">
+              {campaign._count.creatives}/{campaign.estimatedCreatives}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Atualizado</p>
+            <p className="text-xs font-medium">
+              {formatDistanceToNow(new Date(campaign.updatedAt), {
+                addSuffix: true,
+                locale: ptBR,
+              })}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <Badge variant={config.color.includes("amber") ? "destructive" : "default"} className="w-full justify-center">
+            {config.label}
+          </Badge>
+        </div>
+      </Card>
+    </Link>
   )
 }

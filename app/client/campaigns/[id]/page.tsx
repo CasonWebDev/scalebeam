@@ -3,46 +3,57 @@ import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, MessageSquare } from "lucide-react"
-import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { Zap, Clock, CheckCircle2, AlertTriangle, ArrowLeft, Download } from "lucide-react"
+import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { DownloadAllButton } from "@/components/creative-download-button"
 import { CreativeApprovalGrid } from "@/components/creative-approval-grid"
-import { ProjectRefreshButton } from "@/components/project-refresh-button"
 import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
+import { ProjectRefreshButton } from "@/components/project-refresh-button"
+import { DownloadAllButton } from "@/components/creative-download-button"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-const statusConfig = {
+const STATUS_CONFIG = {
   DRAFT: {
     label: "Rascunho",
-    variant: "secondary" as const,
-    description: "Campanha em rascunho"
+    icon: Clock,
+    color: "secondary",
+    alertColor: "border-gray-300 bg-gray-50/50",
+    message: "Campanha em preparação"
   },
   IN_PRODUCTION: {
-    label: "Produzindo...",
-    variant: "default" as const,
-    description: "Nossa equipe está produzindo os criativos da sua campanha"
+    label: "IA Gerando Criativos",
+    icon: Zap,
+    color: "default",
+    alertColor: "border-blue-300 bg-blue-50/50",
+    message: "Nossa IA está gerando seus criativos em tempo real"
   },
   READY: {
-    label: "Em Revisão",
-    variant: "default" as const,
-    description: "Criativos prontos para sua revisão e aprovação"
+    label: "Aguardando Aprovação",
+    icon: AlertTriangle,
+    color: "destructive",
+    alertColor: "border-amber-300 bg-amber-50/50",
+    message: "Os criativos estão prontos! Revise e aprove ou solicite ajustes."
   },
   APPROVED: {
-    label: "Pronto",
-    variant: "default" as const,
-    description: "Campanha aprovada e pronta para uso"
+    label: "Campanha Aprovada",
+    icon: CheckCircle2,
+    color: "default",
+    alertColor: "border-green-300 bg-green-50/50",
+    message: "Campanha aprovada e pronta para suas veiculações"
   },
   REVISION: {
-    label: "Revisão Solicitada",
-    variant: "destructive" as const,
-    description: "Aguardando ajustes solicitados"
+    label: "IA Processando Ajustes",
+    icon: Zap,
+    color: "default",
+    alertColor: "border-purple-300 bg-purple-50/50",
+    message: "Nossa IA está analisando seus feedbacks e gerando novas versões otimizadas"
   },
 }
 
-export default async function ClientProjectDetailPage({
+export default async function CampaignDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -58,7 +69,8 @@ export default async function ClientProjectDetailPage({
   }
 
   const { id } = await params
-  const project = await prisma.project.findUnique({
+
+  const campaign = await prisma.project.findUnique({
     where: { id },
     include: {
       brand: {
@@ -66,44 +78,84 @@ export default async function ClientProjectDetailPage({
           organization: true,
         },
       },
+      template: {
+        select: {
+          name: true,
+          description: true,
+          imageUrl: true,
+        },
+      },
       creatives: {
         orderBy: { createdAt: "desc" },
       },
       comments: {
         include: {
-          user: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       },
     },
   })
 
-  if (!project) {
+  if (!campaign) {
     notFound()
   }
 
-  // Verificar acesso - cliente deve ser da mesma organização
-  if (!session.user.organizationIds.includes(project.brand.organization.id)) {
+  // Verificar acesso
+  if (!session.user.organizationIds.includes(campaign.brand.organization.id)) {
     notFound()
   }
 
-  const config = statusConfig[project.status]
-  const canApprove = project.status === "READY"
-  const needsReview = project.status === "READY" || project.status === "REVISION"
-  const briefingData = project.briefingData ? JSON.parse(project.briefingData) : []
+  const config = STATUS_CONFIG[campaign.status]
+  const Icon = config.icon
+  const canApprove = campaign.status === "READY"
+  const isGenerating = campaign.status === "IN_PRODUCTION" || campaign.status === "REVISION"
+  const isApproved = campaign.status === "APPROVED"
+  const hasCreatives = campaign.creatives.length > 0
+
+  // Parse briefing data
+  let briefingData: any[] = []
+  if (campaign.briefingData) {
+    try {
+      briefingData = JSON.parse(campaign.briefingData)
+    } catch (e) {
+      console.error("Error parsing briefingData:", e)
+    }
+  }
+
+  // Calcular progresso
+  const progress = campaign.estimatedCreatives > 0
+    ? Math.round((campaign.creatives.length / campaign.estimatedCreatives) * 100)
+    : 0
 
   return (
     <div className="flex flex-col gap-6 p-8">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">{project.name}</h1>
-            <Badge variant={config.variant}>{config.label}</Badge>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/client/campaigns">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Link>
+          </Button>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-semibold tracking-tight">{campaign.name}</h1>
+              <Badge variant={config.color as any}>
+                <Icon className="h-4 w-4 mr-1" />
+                {config.label}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mt-1">
+              {campaign.brand.name} · {campaign.brand.organization.name}
+            </p>
           </div>
-          <p className="text-muted-foreground mt-1">
-            {project.brand.name} · {project.brand.organization.name}
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <ProjectAutoRefresh intervalSeconds={30} />
@@ -111,42 +163,57 @@ export default async function ClientProjectDetailPage({
         </div>
       </div>
 
-      {/* Alert for actions needed */}
-      {needsReview && (
-        <Card className="p-4 bg-primary/10 border-primary/20">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium text-primary">Ação necessária</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {project.status === "READY"
-                  ? "Os criativos estão prontos para sua aprovação. Revise e aprove ou solicite ajustes."
-                  : "Nossa IA está processando os ajustes solicitados e gerando novas versões dos criativos."}
-              </p>
-            </div>
+      {/* Status Alert */}
+      <Card className={`p-5 border-2 ${config.alertColor}`}>
+        <div className="flex items-start gap-4">
+          <div className={`p-2 rounded-lg ${config.alertColor}`}>
+            <Icon className="h-6 w-6" />
           </div>
-        </Card>
-      )}
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-1">{config.label}</h3>
+            <p className="text-sm text-muted-foreground">{config.message}</p>
+
+            {isGenerating && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="font-medium">Progresso da Geração</span>
+                  <span className="font-bold">{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                  <span>{campaign.creatives.length} criativos gerados</span>
+                  <span>{campaign.estimatedCreatives} solicitados</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Creatives */}
+        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Campaign Info */}
+          {/* Campaign Stats */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Informações da Campanha</h2>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <span className="text-sm text-muted-foreground">Criativos Solicitados</span>
-                <p className="text-lg font-medium">{project.estimatedCreatives}</p>
+              <div className="p-4 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground mb-1">Criativos Solicitados</p>
+                <p className="text-2xl font-bold">{campaign.estimatedCreatives}</p>
               </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Criativos Entregues</span>
-                <p className="text-lg font-medium">{project.creatives.length}</p>
+              <div className="p-4 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground mb-1">Criativos Gerados</p>
+                <p className="text-2xl font-bold text-primary">{campaign.creatives.length}</p>
               </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Última Atualização</span>
-                <p className="text-sm">
-                  {formatDistanceToNow(new Date(project.updatedAt), {
+              <div className="p-4 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground mb-1">Última Atualização</p>
+                <p className="text-sm font-medium">
+                  {formatDistanceToNow(new Date(campaign.updatedAt), {
                     addSuffix: true,
                     locale: ptBR,
                   })}
@@ -155,7 +222,33 @@ export default async function ClientProjectDetailPage({
             </div>
           </Card>
 
-          {/* Briefing */}
+          {/* Template Info */}
+          {campaign.template && (
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Template Utilizado</h2>
+              <div className="flex gap-4">
+                {campaign.template.imageUrl && (
+                  <div className="relative w-24 h-24 rounded-lg border overflow-hidden bg-white shrink-0">
+                    <img
+                      src={campaign.template.imageUrl}
+                      alt={campaign.template.name}
+                      className="object-contain w-full h-full"
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{campaign.template.name}</h3>
+                  {campaign.template.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {campaign.template.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Briefing Data */}
           {briefingData.length > 0 && (
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-4">Briefing Enviado</h2>
@@ -189,146 +282,90 @@ export default async function ClientProjectDetailPage({
             </Card>
           )}
 
-          {/* Creatives Gallery - Conditional Rendering */}
-          {project.status === "IN_PRODUCTION" ? (
-            <Card className="p-6">
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="animate-pulse flex flex-col items-center gap-4 mb-6">
-                    <div className="h-16 w-16 bg-linear-to-br from-primary/30 to-primary/10 rounded-full flex items-center justify-center">
-                      <CheckCircle2 className="h-8 w-8 text-primary animate-bounce" />
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <h3 className="text-lg font-semibold">IA Gerando Criativos</h3>
-                      <p className="text-sm text-muted-foreground max-w-md">
-                        Nossa IA está gerando seus criativos em tempo real. Você pode acompanhar o progresso abaixo e visualizar os criativos conforme são criados.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Solicitados</p>
-                      <p className="text-2xl font-bold">{project.estimatedCreatives}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Gerados</p>
-                      <p className="text-2xl font-bold text-primary">{project.creatives.length}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Progresso</p>
-                      <p className="text-2xl font-bold">{Math.round((project.creatives.length / project.estimatedCreatives) * 100)}%</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Show partial creatives during production */}
-                {project.creatives.length > 0 && (
-                  <div className="border-t border-border pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">
-                        Criativos Gerados ({project.creatives.length})
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Em processamento pela IA
-                      </p>
-                    </div>
-                    <CreativeApprovalGrid
-                      creatives={project.creatives}
-                      projectId={project.id}
-                      projectName={project.name}
-                      canApprove={false}
-                    />
-                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                      <p className="text-xs text-blue-900 dark:text-blue-100">
-                        💡 <strong>Visualização Prévia:</strong> Estes criativos estão sendo gerados pela IA. Você poderá revisar e aprovar quando a produção estiver completa.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ) : project.status === "READY" && project.creatives.length > 0 ? (
+          {/* Creatives Section */}
+          {hasCreatives ? (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">
-                  Criativos para Revisar ({project.creatives.length})
+                  {isGenerating && "Criativos Gerados"}
+                  {canApprove && "Criativos para Revisar"}
+                  {isApproved && "Seus Criativos Aprovados"}
                 </h2>
-                <DownloadAllButton
-                  projectId={project.id}
-                  projectName={project.name}
-                  creativesCount={project.creatives.length}
-                />
+                {(canApprove || isApproved) && (
+                  <DownloadAllButton
+                    projectId={campaign.id}
+                    projectName={campaign.name}
+                    creativesCount={campaign.creatives.length}
+                  />
+                )}
               </div>
-              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
-                  <strong>Revise os criativos:</strong> Analise cada criativo e aprove ou solicite ajustes conforme necessário.
-                </p>
-              </div>
+
+              {isGenerating && (
+                <div className="mb-4 p-4 border-2 border-blue-300 bg-blue-50/50 rounded-lg">
+                  <p className="text-sm text-blue-900">
+                    <strong>Visualização Prévia:</strong> Estes criativos estão sendo gerados pela IA.
+                    Você poderá revisar e aprovar quando a produção estiver completa.
+                  </p>
+                </div>
+              )}
+
+              {canApprove && (
+                <div className="mb-4 p-4 border-2 border-amber-300 bg-amber-50/50 rounded-lg">
+                  <p className="text-sm text-amber-900">
+                    <strong>Revise os criativos:</strong> Analise cada criativo e aprove ou solicite ajustes conforme necessário.
+                  </p>
+                </div>
+              )}
+
+              {isApproved && (
+                <div className="mb-4 p-4 border-2 border-green-300 bg-green-50/50 rounded-lg">
+                  <p className="text-sm text-green-900">
+                    <strong>Campanha aprovada!</strong> Seus criativos estão prontos para uso em suas campanhas de mídia.
+                  </p>
+                </div>
+              )}
+
               <CreativeApprovalGrid
-                creatives={project.creatives}
-                projectId={project.id}
-                projectName={project.name}
+                creatives={campaign.creatives}
+                projectId={campaign.id}
+                projectName={campaign.name}
                 canApprove={canApprove}
               />
             </Card>
-          ) : project.status === "APPROVED" && project.creatives.length > 0 ? (
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">
-                  Seus Criativos Aprovados ({project.creatives.length})
-                </h2>
-                <DownloadAllButton
-                  projectId={project.id}
-                  projectName={project.name}
-                  creativesCount={project.creatives.length}
-                />
-              </div>
-              <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <p className="text-sm text-green-900 dark:text-green-100">
-                  <strong>Campanha aprovada!</strong> Seus criativos estão prontos para uso em suas campanhas de mídia.
-                </p>
-              </div>
-              <CreativeApprovalGrid
-                creatives={project.creatives}
-                projectId={project.id}
-                projectName={project.name}
-                canApprove={false}
-              />
-            </Card>
           ) : (
-            <Card className="p-6">
-              <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-lg">
-                <p className="text-muted-foreground">
-                  {project.status === "DRAFT"
+            <Card className="p-12">
+              <div className="flex flex-col items-center justify-center text-center border-2 border-dashed border-border rounded-lg py-12">
+                <Zap className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                <p className="text-lg font-medium text-muted-foreground">
+                  {campaign.status === "DRAFT"
                     ? "Campanha em rascunho"
-                    : "Criativos ainda não foram entregues"}
+                    : "Aguardando início da geração"}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Aguardando início da produção
+                <p className="text-sm text-muted-foreground mt-2">
+                  Os criativos aparecerão aqui quando a IA iniciar a produção
                 </p>
               </div>
             </Card>
           )}
         </div>
 
-        {/* Right Column - Comments */}
+        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Comments */}
+          {/* Comments History */}
           <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Histórico ({project.comments.length})
+            <h2 className="text-lg font-semibold mb-4">
+              Histórico de Comentários ({campaign.comments.length})
             </h2>
 
             <div className="space-y-4">
-              {project.comments.map((comment) => (
-                <div key={comment.id} className="rounded-lg border border-border p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-primary text-xs font-medium text-primary-foreground flex items-center justify-center">
-                        {comment.user.name[0]}
+              {campaign.comments.length > 0 ? (
+                campaign.comments.map((comment) => (
+                  <div key={comment.id} className="rounded-lg border border-border p-4">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="h-8 w-8 rounded-full bg-primary text-xs font-medium text-primary-foreground flex items-center justify-center shrink-0">
+                        {comment.user.name[0].toUpperCase()}
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{comment.user.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(comment.createdAt), {
@@ -338,16 +375,27 @@ export default async function ClientProjectDetailPage({
                         </p>
                       </div>
                     </div>
+                    <p className="text-sm pl-11">{comment.content}</p>
                   </div>
-                  <p className="text-sm">{comment.content}</p>
-                </div>
-              ))}
-
-              {project.comments.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
                   Nenhum comentário ainda
                 </p>
               )}
+            </div>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Ações Rápidas</h2>
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/client/campaigns">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar para Campanhas
+                </Link>
+              </Button>
             </div>
           </Card>
         </div>
