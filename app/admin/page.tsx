@@ -290,7 +290,7 @@ export default async function AdminDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Projetos Recentes</h3>
               <Link
-                href="/admin/projects"
+                href="/admin/campaigns"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Ver todos →
@@ -303,7 +303,7 @@ export default async function AdminDashboard() {
                 return (
                   <Link
                     key={project.id}
-                    href={`/admin/projects/${project.id}`}
+                    href={`/admin/campaigns/${project.id}`}
                     className="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-secondary/50"
                   >
                     <div className="flex items-center gap-4">

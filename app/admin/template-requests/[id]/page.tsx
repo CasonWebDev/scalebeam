@@ -64,7 +64,7 @@ export default async function AdminTemplateRequestPage({
 
   // Verificar se é realmente uma solicitação de template
   if (project.projectType !== "TEMPLATE_CREATION") {
-    redirect(`/admin/projects/${id}`)
+    redirect(`/admin/campaigns/${id}`)
   }
 
   const statusCfg = statusConfig[project.status]
@@ -110,7 +110,7 @@ export default async function AdminTemplateRequestPage({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/projects">
+            <Link href="/admin/campaigns">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Link>
