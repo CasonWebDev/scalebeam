@@ -162,30 +162,49 @@ export function CreativeApprovalGrid({
   }
 
   const confirmRevision = async () => {
-    if (!revisionNotes.trim()) {
-      toast.error("Por favor, descreva os ajustes necessários")
+    if (!revisionNotes.trim() || revisionNotes.length < 10) {
+      toast.error("Por favor, descreva os ajustes necessários (mínimo 10 caracteres)")
       return
     }
 
     setIsProcessing(true)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch(`/api/projects/${projectId}/request-revision`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          comment: revisionNotes,
+        }),
+      })
 
-    const count = selectedCreatives.size
-    toast.success("Solicitação de ajustes enviada!", {
-      description: `A equipe UXER foi notificada sobre os ajustes necessários em ${count} criativo${count > 1 ? 's' : ''}.`,
-    })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Falha ao solicitar revisão")
+      }
 
-    setIsProcessing(false)
-    setShowRevisionDialog(false)
-    setRevisionNotes("")
-    setSelectedCreatives(new Set())
+      const count = selectedCreatives.size
+      toast.success("Solicitação de ajustes enviada!", {
+        description: `A equipe foi notificada sobre os ajustes necessários. O projeto voltará para produção.`,
+      })
 
-    // Simulate page reload
-    setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      setShowRevisionDialog(false)
+      setRevisionNotes("")
+      setSelectedCreatives(new Set())
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (error: any) {
+      toast.error("Erro ao solicitar revisão", {
+        description: error.message,
+      })
+      console.error(error)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
