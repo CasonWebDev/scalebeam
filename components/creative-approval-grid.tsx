@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CheckCircle2, X, Download } from "lucide-react"
+import { CheckCircle2, X, Download, Zap } from "lucide-react"
 import { CreativeDownloadButton } from "@/components/creative-download-button"
 import {
   AlertDialog,
