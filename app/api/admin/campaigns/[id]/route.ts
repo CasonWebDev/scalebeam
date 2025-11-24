@@ -41,6 +41,12 @@ export async function GET(
         creatives: {
           orderBy: { createdAt: "desc" },
         },
+        comments: {
+          include: {
+            user: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
         _count: {
           select: {
             creatives: true,
