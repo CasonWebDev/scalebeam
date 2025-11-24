@@ -44,13 +44,6 @@ const STATUS_CONFIG = {
     alertColor: "border-green-300 bg-green-50/50",
     message: "Campanha aprovada e pronta para suas veiculações"
   },
-  REVISION: {
-    label: "IA Processando Ajustes",
-    icon: Zap,
-    color: "default",
-    alertColor: "border-purple-300 bg-purple-50/50",
-    message: "Nossa IA está analisando seus feedbacks e gerando novas versões otimizadas"
-  },
 }
 
 export default async function CampaignDetailPage({
@@ -88,17 +81,6 @@ export default async function CampaignDetailPage({
       creatives: {
         orderBy: { createdAt: "desc" },
       },
-      comments: {
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      },
     },
   })
 
@@ -111,10 +93,12 @@ export default async function CampaignDetailPage({
     notFound()
   }
 
-  const config = STATUS_CONFIG[campaign.status]
+  // Se o status for REVISION (antigo), tratar como IN_PRODUCTION
+  const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
+  const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
   const Icon = config.icon
   const canApprove = campaign.status === "READY"
-  const isGenerating = campaign.status === "IN_PRODUCTION" || campaign.status === "REVISION"
+  const isGenerating = campaign.status === "IN_PRODUCTION"
   const isApproved = campaign.status === "APPROVED"
   const hasCreatives = campaign.creatives.length > 0
 
@@ -351,41 +335,6 @@ export default async function CampaignDetailPage({
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Comments History */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">
-              Histórico de Comentários ({campaign.comments.length})
-            </h2>
-
-            <div className="space-y-4">
-              {campaign.comments.length > 0 ? (
-                campaign.comments.map((comment) => (
-                  <div key={comment.id} className="rounded-lg border border-border p-4">
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="h-8 w-8 rounded-full bg-primary text-xs font-medium text-primary-foreground flex items-center justify-center shrink-0">
-                        {comment.user.name[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{comment.user.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(comment.createdAt), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-sm pl-11">{comment.content}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhum comentário ainda
-                </p>
-              )}
-            </div>
-          </Card>
-
           {/* Quick Actions */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Ações Rápidas</h2>

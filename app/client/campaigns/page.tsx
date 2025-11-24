@@ -36,12 +36,6 @@ const STATUS_CONFIG = {
     color: "bg-green-100 text-green-700 border-green-300",
     description: "Campanha aprovada e pronta"
   },
-  REVISION: {
-    label: "Processando",
-    icon: Zap,
-    color: "bg-purple-100 text-purple-700 border-purple-300",
-    description: "IA processando seus ajustes"
-  },
 }
 
 async function getCampaigns(organizationIds: string[]) {
@@ -95,7 +89,7 @@ export default async function ClientCampaignsPage() {
 
   // Agrupar por status
   const needsAction = campaigns.filter(c => c.status === "READY")
-  const inProgress = campaigns.filter(c => c.status === "IN_PRODUCTION" || c.status === "REVISION")
+  const inProgress = campaigns.filter(c => c.status === "IN_PRODUCTION")
   const completed = campaigns.filter(c => c.status === "APPROVED")
   const drafts = campaigns.filter(c => c.status === "DRAFT")
 
@@ -253,7 +247,9 @@ export default async function ClientCampaignsPage() {
 }
 
 function CampaignCard({ campaign }: { campaign: any }) {
-  const config = STATUS_CONFIG[campaign.status as keyof typeof STATUS_CONFIG]
+  // Se o status for REVISION (antigo), tratar como IN_PRODUCTION
+  const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
+  const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
   const Icon = config.icon
 
   return (

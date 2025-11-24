@@ -46,8 +46,8 @@ export function UploadCreativesModal({
 
         const formData = new FormData()
         formData.append("file", file)
-        formData.append("bucket", "creatives")
-        formData.append("folder", projectId)
+        formData.append("bucket", "assets")
+        formData.append("folder", `creatives/${projectId}`)
 
         const uploadResponse = await fetch("/api/upload", {
           method: "POST",

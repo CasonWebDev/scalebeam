@@ -54,13 +54,13 @@ export async function POST(
       )
     }
 
-    console.log('[REQUEST REVISION] Updating project status to REVISION')
+    console.log('[REQUEST REVISION] Updating project status to IN_PRODUCTION')
 
-    // Atualizar status
+    // Atualizar status para IN_PRODUCTION (IA processando ajustes)
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
-        status: "REVISION",
+        status: "IN_PRODUCTION",
       },
       include: {
         brand: {

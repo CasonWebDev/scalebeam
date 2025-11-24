@@ -39,12 +39,6 @@ const STATUS_CONFIG = {
     icon: CheckCircle2,
     color: "bg-green-100 text-green-700"
   },
-  REVISION: {
-    label: "Processando",
-    variant: "default" as const,
-    icon: Zap,
-    color: "bg-purple-100 text-purple-700"
-  },
 }
 
 export default async function AdminCampaignsPage() {
@@ -92,7 +86,7 @@ export default async function AdminCampaignsPage() {
   // Estatísticas
   const stats = {
     total: campaigns.length,
-    needsReview: campaigns.filter(c => c.status === "READY" || c.status === "REVISION").length,
+    needsReview: campaigns.filter(c => c.status === "READY").length,
     generating: campaigns.filter(c => c.status === "IN_PRODUCTION").length,
     approved: campaigns.filter(c => c.status === "APPROVED").length,
   }
@@ -196,7 +190,9 @@ export default async function AdminCampaignsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {campaigns.map((campaign) => {
-                const config = STATUS_CONFIG[campaign.status]
+                // Se o status for REVISION (antigo), tratar como IN_PRODUCTION
+                const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
+                const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
                 const Icon = config.icon
                 const progress = campaign.estimatedCreatives > 0
                   ? Math.round((campaign._count.creatives / campaign.estimatedCreatives) * 100)

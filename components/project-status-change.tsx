@@ -105,7 +105,7 @@ export function ProjectStatusChange({
     return null
   }
 
-  if (currentStatus === "DRAFT" || currentStatus === "REVISION") {
+  if (currentStatus === "DRAFT") {
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -121,7 +121,7 @@ export function ProjectStatusChange({
             <AlertDialogTitle>Iniciar Produção</AlertDialogTitle>
             <AlertDialogDescription>
               Você está prestes a mover este projeto para produção.
-              Isso sinalizará que a equipe UXER está trabalhando nos criativos.
+              Isso sinalizará que a IA está gerando os criativos automaticamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
