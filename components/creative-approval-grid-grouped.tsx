@@ -241,27 +241,61 @@ export function CreativeApprovalGridGrouped({
   }
 
   const confirmRevision = async () => {
-    if (!revisionNotes.trim()) {
-      toast.error("Por favor, descreva os ajustes necessários")
+    console.log('[CONFIRM REVISION GROUPED] Starting revision request')
+    console.log('[CONFIRM REVISION GROUPED] Revision notes:', revisionNotes)
+    console.log('[CONFIRM REVISION GROUPED] Project ID:', projectId)
+
+    if (!revisionNotes.trim() || revisionNotes.length < 10) {
+      console.log('[CONFIRM REVISION GROUPED] Validation failed - notes too short')
+      toast.error("Por favor, descreva os ajustes necessários (mínimo 10 caracteres)")
       return
     }
 
     setIsProcessing(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    console.log('[CONFIRM REVISION GROUPED] Calling API...')
 
-    const count = selectedCreatives.size
-    toast.success("Solicitação de ajustes enviada!", {
-      description: `A equipe UXER foi notificada sobre os ajustes necessários em ${count} criativo${count > 1 ? 's' : ''}.`,
-    })
+    try {
+      const response = await fetch(`/api/projects/${projectId}/request-revision`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          comment: revisionNotes,
+        }),
+      })
 
-    setIsProcessing(false)
-    setShowRevisionDialog(false)
-    setRevisionNotes("")
-    setSelectedCreatives(new Set())
+      console.log('[CONFIRM REVISION GROUPED] Response status:', response.status)
 
-    setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      if (!response.ok) {
+        const data = await response.json()
+        console.log('[CONFIRM REVISION GROUPED] Error response:', data)
+        throw new Error(data.error || "Falha ao solicitar revisão")
+      }
+
+      const responseData = await response.json()
+      console.log('[CONFIRM REVISION GROUPED] Success response:', responseData)
+
+      const count = selectedCreatives.size
+      toast.success("Solicitação enviada com sucesso!", {
+        description: `Nossa IA está analisando seus feedbacks e processando os ajustes solicitados.`,
+      })
+
+      setShowRevisionDialog(false)
+      setRevisionNotes("")
+      setSelectedCreatives(new Set())
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (error: any) {
+      toast.error("Erro ao solicitar revisão", {
+        description: error.message,
+      })
+      console.error(error)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const allSelected = selectedCreatives.size === creatives.length && creatives.length > 0
