@@ -46,22 +46,19 @@ export async function POST(
       }
     }
 
-    // Verificar se projeto está em READY
-    if (project.status !== "READY") {
+    // Verificar se projeto está em IN_PRODUCTION (pode solicitar revisão a qualquer momento)
+    if (project.status !== "IN_PRODUCTION") {
       return NextResponse.json(
-        { error: "Only projects with READY status can request revision" },
+        { error: "Only projects in production can request revision" },
         { status: 400 }
       )
     }
 
-    console.log('[REQUEST REVISION] Updating project status to IN_PRODUCTION')
+    console.log('[REQUEST REVISION] Keeping project status as IN_PRODUCTION')
 
-    // Atualizar status para IN_PRODUCTION (IA processando ajustes)
-    const updatedProject = await prisma.project.update({
+    // Buscar dados atualizados do projeto (não precisa mudar status)
+    const updatedProject = await prisma.project.findUnique({
       where: { id: projectId },
-      data: {
-        status: "IN_PRODUCTION",
-      },
       include: {
         brand: {
           select: {

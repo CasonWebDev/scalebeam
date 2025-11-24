@@ -24,18 +24,11 @@ const STATUS_CONFIG = {
     message: "Campanha em preparação"
   },
   IN_PRODUCTION: {
-    label: "IA Gerando Criativos",
+    label: "Campanha em Produção",
     icon: Zap,
     color: "default",
     alertColor: "border-blue-300 bg-blue-50/50",
-    message: "Nossa IA está gerando seus criativos em tempo real"
-  },
-  READY: {
-    label: "Aguardando Aprovação",
-    icon: AlertTriangle,
-    color: "destructive",
-    alertColor: "border-amber-300 bg-amber-50/50",
-    message: "Os criativos estão prontos! Revise e aprove ou solicite ajustes."
+    message: "Criativos sendo gerados! Assim que os primeiros ficarem prontos, você já pode revisar e aprovar."
   },
   APPROVED: {
     label: "Campanha Aprovada",
@@ -97,7 +90,8 @@ export default async function CampaignDetailPage({
   const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
   const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
   const Icon = config.icon
-  const canApprove = campaign.status === "READY"
+  // Cliente pode aprovar quando houver criativos e não estiver aprovado
+  const canApprove = campaign.status === "IN_PRODUCTION" && campaign.creatives.length > 0
   const isGenerating = campaign.status === "IN_PRODUCTION"
   const isApproved = campaign.status === "APPROVED"
   const hasCreatives = campaign.creatives.length > 0

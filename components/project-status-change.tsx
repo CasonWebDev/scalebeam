@@ -31,41 +31,6 @@ export function ProjectStatusChange({
 }: ProjectStatusChangeProps) {
   const [isChanging, setIsChanging] = useState(false)
 
-  const handleMarkAsReady = async () => {
-    setIsChanging(true)
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "READY",
-          comment: `Projeto marcado como pronto pelo admin`,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Falha ao atualizar status")
-      }
-
-      toast.success("Projeto marcado como pronto!", {
-        description: `${projectName} está agora disponível para aprovação do cliente.`,
-      })
-
-      setTimeout(() => {
-        window.location.reload()
-      }, 1500)
-    } catch (error: any) {
-      toast.error("Erro ao atualizar status", {
-        description: error.message,
-      })
-      setIsChanging(false)
-    }
-  }
-
   const handleStartProduction = async () => {
     setIsChanging(true)
 
@@ -135,35 +100,7 @@ export function ProjectStatusChange({
     )
   }
 
-  if (currentStatus === "IN_PRODUCTION") {
-    return (
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          {children || (
-            <Button size="sm" variant="default">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Marcar como Pronto
-            </Button>
-          )}
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Marcar como Pronto</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você está prestes a marcar este projeto como pronto para aprovação.
-              O cliente será notificado e poderá revisar os criativos entregues.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button onClick={handleMarkAsReady} disabled={isChanging}>
-              {isChanging ? "Processando..." : "Confirmar"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    )
-  }
-
+  // Quando está IN_PRODUCTION, não precisa de ação do admin
+  // O cliente pode aprovar direto assim que houver criativos
   return null
 }

@@ -19,16 +19,10 @@ const STATUS_CONFIG = {
     description: "Campanha em preparação"
   },
   IN_PRODUCTION: {
-    label: "IA Gerando",
+    label: "Em Produção",
     icon: Zap,
     color: "bg-blue-100 text-blue-700 border-blue-300",
-    description: "Nossa IA está criando seus criativos"
-  },
-  READY: {
-    label: "Revisar",
-    icon: AlertTriangle,
-    color: "bg-amber-100 text-amber-700 border-amber-300",
-    description: "Criativos prontos para sua aprovação"
+    description: "Criativos sendo gerados pela IA"
   },
   APPROVED: {
     label: "Aprovado",
@@ -88,7 +82,6 @@ export default async function ClientCampaignsPage() {
   const campaigns = await getCampaigns(session.user.organizationIds)
 
   // Agrupar por status
-  const needsAction = campaigns.filter(c => c.status === "READY")
   const inProgress = campaigns.filter(c => c.status === "IN_PRODUCTION")
   const completed = campaigns.filter(c => c.status === "APPROVED")
   const drafts = campaigns.filter(c => c.status === "DRAFT")
@@ -112,26 +105,14 @@ export default async function ClientCampaignsPage() {
       </div>
 
       {/* Status Overview */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-4 border-amber-200 bg-amber-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Precisa Revisar</p>
-              <p className="text-2xl font-bold text-amber-700">{needsAction.length}</p>
-            </div>
-          </div>
-        </Card>
-
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-4 border-blue-200 bg-blue-50/50">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-100">
               <Zap className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">IA Trabalhando</p>
+              <p className="text-sm text-muted-foreground">Em Produção</p>
               <p className="text-2xl font-bold text-blue-700">{inProgress.length}</p>
             </div>
           </div>
@@ -165,21 +146,6 @@ export default async function ClientCampaignsPage() {
       {/* Campaigns List */}
       {campaigns.length > 0 ? (
         <div className="space-y-6">
-          {/* Needs Action Section */}
-          {needsAction.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                Aguardando Sua Aprovação ({needsAction.length})
-              </h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {needsAction.map((campaign) => (
-                  <CampaignCard key={campaign.id} campaign={campaign} />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* In Progress Section */}
           {inProgress.length > 0 && (
             <div>

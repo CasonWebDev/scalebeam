@@ -22,16 +22,10 @@ const STATUS_CONFIG = {
     color: "bg-gray-100 text-gray-700"
   },
   IN_PRODUCTION: {
-    label: "IA Gerando",
+    label: "Em Produção",
     variant: "default" as const,
     icon: Zap,
     color: "bg-blue-100 text-blue-700"
-  },
-  READY: {
-    label: "Revisar",
-    variant: "destructive" as const,
-    icon: AlertTriangle,
-    color: "bg-amber-100 text-amber-700"
   },
   APPROVED: {
     label: "Aprovado",
@@ -86,9 +80,9 @@ export default async function AdminCampaignsPage() {
   // Estatísticas
   const stats = {
     total: campaigns.length,
-    needsReview: campaigns.filter(c => c.status === "READY").length,
     generating: campaigns.filter(c => c.status === "IN_PRODUCTION").length,
     approved: campaigns.filter(c => c.status === "APPROVED").length,
+    drafts: campaigns.filter(c => c.status === "DRAFT").length,
   }
 
   return (
@@ -122,14 +116,14 @@ export default async function AdminCampaignsPage() {
           </div>
         </Card>
 
-        <Card className="p-4 border-amber-200 bg-amber-50/50">
+        <Card className="p-4 border-gray-200 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <div className="p-2 rounded-lg bg-gray-100">
+              <Clock className="h-5 w-5 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Precisa Revisar</p>
-              <p className="text-2xl font-bold text-amber-700">{stats.needsReview}</p>
+              <p className="text-sm text-muted-foreground">Rascunhos</p>
+              <p className="text-2xl font-bold text-gray-700">{stats.drafts}</p>
             </div>
           </div>
         </Card>
@@ -140,7 +134,7 @@ export default async function AdminCampaignsPage() {
               <Zap className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">IA Gerando</p>
+              <p className="text-sm text-muted-foreground">Em Produção</p>
               <p className="text-2xl font-bold text-blue-700">{stats.generating}</p>
             </div>
           </div>
