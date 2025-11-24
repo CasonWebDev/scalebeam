@@ -198,8 +198,8 @@ export function CreativeApprovalGrid({
       console.log('[CONFIRM REVISION] Success response:', responseData)
 
       const count = selectedCreatives.size
-      toast.success("Solicitação de ajustes enviada!", {
-        description: `A equipe foi notificada sobre os ajustes necessários. O projeto voltará para produção.`,
+      toast.success("Solicitação enviada com sucesso!", {
+        description: `Nossa IA está analisando seus feedbacks e processando os ajustes solicitados.`,
       })
 
       setShowRevisionDialog(false)
@@ -497,7 +497,7 @@ export function CreativeApprovalGrid({
             <AlertDialogTitle>Solicitar Ajustes nos Criativos</AlertDialogTitle>
             <AlertDialogDescription>
               Você selecionou {selectedCreatives.size} criativo{selectedCreatives.size > 1 ? 's' : ''} para ajustes.
-              Descreva as mudanças que você gostaria que fossem feitas.
+              Nossa IA irá processar suas solicitações e gerar novas versões otimizadas.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

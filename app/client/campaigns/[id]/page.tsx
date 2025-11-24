@@ -11,7 +11,6 @@ import { DownloadAllButton } from "@/components/creative-download-button"
 import { CreativeApprovalGrid } from "@/components/creative-approval-grid"
 import { ProjectRefreshButton } from "@/components/project-refresh-button"
 import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
-import { ProjectApprovalActions } from "@/components/project-approval-actions"
 
 export const dynamic = 'force-dynamic'
 
@@ -122,7 +121,7 @@ export default async function ClientProjectDetailPage({
               <p className="text-sm text-muted-foreground mt-1">
                 {project.status === "READY"
                   ? "Os criativos estão prontos para sua aprovação. Revise e aprove ou solicite ajustes."
-                  : "Aguardando ajustes solicitados pela equipe."}
+                  : "Nossa IA está processando os ajustes solicitados e gerando novas versões dos criativos."}
               </p>
             </div>
           </div>
@@ -312,19 +311,8 @@ export default async function ClientProjectDetailPage({
           )}
         </div>
 
-        {/* Right Column - Comments and Actions */}
+        {/* Right Column - Comments */}
         <div className="space-y-6">
-          {/* Approval Actions */}
-          {canApprove && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Ações</h2>
-              <ProjectApprovalActions
-                projectId={project.id}
-                projectName={project.name}
-              />
-            </Card>
-          )}
-
           {/* Comments */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
