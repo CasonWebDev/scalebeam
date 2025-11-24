@@ -209,7 +209,7 @@ export default function NewTemplatePage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/client/projects">
+          <Link href="/client/campaigns">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Link>
@@ -436,7 +436,7 @@ export default function NewTemplatePage() {
                 className="w-full"
                 asChild
               >
-                <Link href="/client/projects">Cancelar</Link>
+                <Link href="/client/campaigns">Cancelar</Link>
               </Button>
             </div>
           </Card>
