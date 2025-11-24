@@ -16,6 +16,8 @@ interface Template {
   description: string | null
   imageUrl: string
   templateStatus: "PENDING_APPROVAL" | "APPROVED" | "REJECTED"
+  platforms: string | null
+  formats: string | null
   brand: {
     name: string
   }
@@ -33,6 +35,36 @@ const templateStatusConfig = {
   PENDING_APPROVAL: { label: "Aguardando Aprovação", variant: "secondary" as const },
   APPROVED: { label: "Aprovado", variant: "default" as const },
   REJECTED: { label: "Rejeitado", variant: "destructive" as const },
+}
+
+// Labels de plataformas
+const platformLabels: Record<string, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  google: "Google Ads",
+  tiktok: "TikTok",
+  linkedin: "LinkedIn",
+  youtube: "YouTube",
+}
+
+// Labels de formatos
+const formatLabels: Record<string, string> = {
+  feed: "Feed",
+  stories: "Stories",
+  banner: "Banner",
+  carrossel: "Carrossel",
+  video: "Vídeo",
+  display: "Display",
+}
+
+// Função helper para parsear JSON arrays
+function parseJsonArray(jsonString: string | null): string[] {
+  if (!jsonString) return []
+  try {
+    return JSON.parse(jsonString)
+  } catch {
+    return []
+  }
 }
 
 export default function ClientTemplatesPage() {
@@ -121,6 +153,35 @@ export default function ClientTemplatesPage() {
                       {template.description}
                     </p>
                   )}
+
+                  {/* Platforms */}
+                  {parseJsonArray(template.platforms).length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Plataformas:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {parseJsonArray(template.platforms).map((platform) => (
+                          <Badge key={platform} variant="secondary" className="text-xs">
+                            {platformLabels[platform] || platform}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Formats */}
+                  {parseJsonArray(template.formats).length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Formatos:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {parseJsonArray(template.formats).map((format) => (
+                          <Badge key={format} variant="outline" className="text-xs">
+                            {formatLabels[format] || format}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
                     <span>{template._count.projects} campanha(s)</span>
                     <span>
@@ -178,6 +239,35 @@ export default function ClientTemplatesPage() {
                       {template.description}
                     </p>
                   )}
+
+                  {/* Platforms */}
+                  {parseJsonArray(template.platforms).length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Plataformas:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {parseJsonArray(template.platforms).map((platform) => (
+                          <Badge key={platform} variant="secondary" className="text-xs">
+                            {platformLabels[platform] || platform}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Formats */}
+                  {parseJsonArray(template.formats).length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Formatos:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {parseJsonArray(template.formats).map((format) => (
+                          <Badge key={format} variant="outline" className="text-xs">
+                            {formatLabels[format] || format}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-xs text-muted-foreground mb-3">
                     Solicitado{" "}
                     {formatDistanceToNow(new Date(template.createdAt), {
