@@ -162,12 +162,18 @@ export function CreativeApprovalGrid({
   }
 
   const confirmRevision = async () => {
+    console.log('[CONFIRM REVISION] Starting revision request')
+    console.log('[CONFIRM REVISION] Revision notes:', revisionNotes)
+    console.log('[CONFIRM REVISION] Project ID:', projectId)
+
     if (!revisionNotes.trim() || revisionNotes.length < 10) {
+      console.log('[CONFIRM REVISION] Validation failed - notes too short')
       toast.error("Por favor, descreva os ajustes necessários (mínimo 10 caracteres)")
       return
     }
 
     setIsProcessing(true)
+    console.log('[CONFIRM REVISION] Calling API...')
 
     try {
       const response = await fetch(`/api/projects/${projectId}/request-revision`, {
@@ -180,10 +186,16 @@ export function CreativeApprovalGrid({
         }),
       })
 
+      console.log('[CONFIRM REVISION] Response status:', response.status)
+
       if (!response.ok) {
         const data = await response.json()
+        console.log('[CONFIRM REVISION] Error response:', data)
         throw new Error(data.error || "Falha ao solicitar revisão")
       }
+
+      const responseData = await response.json()
+      console.log('[CONFIRM REVISION] Success response:', responseData)
 
       const count = selectedCreatives.size
       toast.success("Solicitação de ajustes enviada!", {
