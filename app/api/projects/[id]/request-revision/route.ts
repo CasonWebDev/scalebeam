@@ -15,8 +15,12 @@ export async function POST(
     const { id: projectId } = await params
     const body = await request.json()
 
+    console.log('[REQUEST REVISION] Project ID:', projectId)
+    console.log('[REQUEST REVISION] Request body:', body)
+
     // Validar input
     const validatedData = requestRevisionSchema.parse(body)
+    console.log('[REQUEST REVISION] Validated data:', validatedData)
 
     // Buscar projeto
     const project = await prisma.project.findUnique({
@@ -50,6 +54,8 @@ export async function POST(
       )
     }
 
+    console.log('[REQUEST REVISION] Updating project status to REVISION')
+
     // Atualizar status
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
@@ -78,6 +84,8 @@ export async function POST(
       },
     })
 
+    console.log('[REQUEST REVISION] Project updated, creating comment')
+
     // Criar comentário
     await prisma.comment.create({
       data: {
@@ -86,6 +94,8 @@ export async function POST(
         content: validatedData.comment,
       },
     })
+
+    console.log('[REQUEST REVISION] Comment created, creating activity log')
 
     // Criar log de atividade
     await prisma.activityLog.create({
@@ -96,6 +106,9 @@ export async function POST(
         description: `Revisão solicitada para projeto "${project.name}" por ${session!.user.name}`,
       },
     })
+
+    console.log('[REQUEST REVISION] All operations completed successfully')
+    console.log('[REQUEST REVISION] Updated project status:', updatedProject.status)
 
     return NextResponse.json({
       success: true,
