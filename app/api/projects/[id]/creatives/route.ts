@@ -135,7 +135,7 @@ export async function POST(
     // Verificar se o projeto está em status adequado para receber criativos
     if (project.status === "APPROVED") {
       return NextResponse.json(
-        { error: "Não é possível adicionar criativos a um projeto já aprovado" },
+        { error: "Não é possível adicionar criativos a um projeto já concluído" },
         { status: 400 }
       )
     }

@@ -4,7 +4,8 @@ import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CheckCircle2, X, Download, Zap } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, X, Download, Zap, MessageSquare } from "lucide-react"
 import { CreativeDownloadButton } from "@/components/creative-download-button"
 import {
   AlertDialog,
@@ -28,21 +29,29 @@ interface Creative {
   format: string
   lista: string | null
   modelo: string | null
+  feedbacks?: Array<{
+    id: string
+    content: string
+    user: {
+      name: string
+    }
+    createdAt: Date
+  }>
 }
 
-interface CreativeApprovalGridProps {
+interface CreativeGridProps {
   creatives: Creative[]
   projectId: string
   projectName: string
-  canApprove: boolean
+  canRequestChanges: boolean
 }
 
-export function CreativeApprovalGrid({
+export function CreativeGrid({
   creatives,
   projectId,
   projectName,
-  canApprove,
-}: CreativeApprovalGridProps) {
+  canRequestChanges,
+}: CreativeGridProps) {
   const [selectedCreatives, setSelectedCreatives] = useState<Set<string>>(new Set())
   const [showRevisionDialog, setShowRevisionDialog] = useState(false)
   const [revisionNotes, setRevisionNotes] = useState("")
@@ -127,6 +136,7 @@ export function CreativeApprovalGrid({
         },
         body: JSON.stringify({
           comment: revisionNotes,
+          creativeIds: Array.from(selectedCreatives),
         }),
       })
 
@@ -276,7 +286,7 @@ export function CreativeApprovalGrid({
       </div>
 
       {/* Action Bar */}
-      {canApprove && (
+      {canRequestChanges && (
         <div className="flex items-center justify-between mb-4 p-4 bg-muted/50 rounded-lg border border-border">
           <div className="flex items-center gap-3">
             <Checkbox
@@ -312,16 +322,16 @@ export function CreativeApprovalGrid({
             return (
               <div
                 key={creative.id}
-                onClick={() => canApprove && toggleCreative(creative.id)}
+                onClick={() => canRequestChanges && toggleCreative(creative.id)}
                 className={`group relative overflow-hidden rounded-lg border transition-all ${
-                  canApprove ? "cursor-pointer" : ""
+                  canRequestChanges ? "cursor-pointer" : ""
                 } ${
                   isSelected
                     ? "border-primary ring-2 ring-primary ring-offset-2 bg-primary/5"
                     : "border-border bg-muted hover:border-primary/50"
                 }`}
               >
-              {canApprove && (
+              {canRequestChanges && (
                 <div
                   className="absolute top-3 left-3 z-10"
                   onClick={(e) => e.stopPropagation()}
@@ -334,7 +344,17 @@ export function CreativeApprovalGrid({
                 </div>
               )}
 
-              {isSelected && canApprove && (
+              {/* Feedback Badge */}
+              {creative.feedbacks && creative.feedbacks.length > 0 && (
+                <div className="absolute top-3 right-3 z-10">
+                  <Badge variant="destructive" className="flex items-center gap-1 shadow-lg">
+                    <MessageSquare className="h-3 w-3" />
+                    {creative.feedbacks.length}
+                  </Badge>
+                </div>
+              )}
+
+              {isSelected && canRequestChanges && !creative.feedbacks?.length && (
                 <div className="absolute top-3 right-3 z-10">
                   <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs font-semibold shadow-lg">
                     <CheckCircle2 className="h-4 w-4" />
@@ -358,7 +378,18 @@ export function CreativeApprovalGrid({
                   fill
                   className="object-cover transition-transform group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4">
+                  {/* Show feedbacks on hover if they exist */}
+                  {creative.feedbacks && creative.feedbacks.length > 0 && (
+                    <div className="w-full mb-2 max-h-24 overflow-y-auto text-left bg-black/80 rounded p-2">
+                      {creative.feedbacks.map((feedback) => (
+                        <div key={feedback.id} className="mb-2 last:mb-0">
+                          <p className="text-xs font-semibold text-white">{feedback.user.name}:</p>
+                          <p className="text-xs text-gray-300">{feedback.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div onClick={(e) => e.stopPropagation()}>
                     <CreativeDownloadButton
                       creativeId={creative.id}

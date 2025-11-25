@@ -2,38 +2,16 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Zap, Eye, Upload, Edit2, AlertTriangle, Clock, CheckCircle2 } from "lucide-react"
+import { Zap, Eye, Upload, Edit2 } from "lucide-react"
+import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { AdminCampaignViewModal } from "@/components/admin-campaign-view-modal"
 import { UploadCreativesModal } from "@/components/upload-creatives-modal"
 import { ProjectStatusChange } from "@/components/project-status-change"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 
 export const dynamic = "force-dynamic"
-
-const STATUS_CONFIG = {
-  DRAFT: {
-    label: "Rascunho",
-    variant: "secondary" as const,
-    icon: Clock,
-    color: "bg-gray-100 text-gray-700"
-  },
-  IN_PRODUCTION: {
-    label: "Em Produção",
-    variant: "default" as const,
-    icon: Zap,
-    color: "bg-blue-100 text-blue-700"
-  },
-  APPROVED: {
-    label: "Aprovado",
-    variant: "default" as const,
-    icon: CheckCircle2,
-    color: "bg-green-100 text-green-700"
-  },
-}
 
 export default async function AdminCampaignsPage() {
   const session = await auth()
@@ -71,19 +49,8 @@ export default async function AdminCampaignsPage() {
         },
       },
     },
-    orderBy: [
-      { status: "asc" },
-      { updatedAt: "desc" },
-    ],
+    orderBy: { updatedAt: "desc" },
   })
-
-  // Estatísticas
-  const stats = {
-    total: campaigns.length,
-    generating: campaigns.filter(c => c.status === "IN_PRODUCTION").length,
-    approved: campaigns.filter(c => c.status === "APPROVED").length,
-    drafts: campaigns.filter(c => c.status === "DRAFT").length,
-  }
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -95,62 +62,11 @@ export default async function AdminCampaignsPage() {
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Campanhas</h1>
               <p className="text-muted-foreground mt-1">
-                Gerencie todas as campanhas dos clientes
+                {campaigns.length} campanha(s) cadastrada(s)
               </p>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-4 border-gray-200 bg-gray-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gray-100">
-              <Zap className="h-5 w-5 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold text-gray-700">{stats.total}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 border-gray-200 bg-gray-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gray-100">
-              <Clock className="h-5 w-5 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Rascunhos</p>
-              <p className="text-2xl font-bold text-gray-700">{stats.drafts}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 border-blue-200 bg-blue-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100">
-              <Zap className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Em Produção</p>
-              <p className="text-2xl font-bold text-blue-700">{stats.generating}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 border-green-200 bg-green-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-100">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Aprovadas</p>
-              <p className="text-2xl font-bold text-green-700">{stats.approved}</p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Campaigns Table */}
@@ -169,9 +85,6 @@ export default async function AdminCampaignsPage() {
                   Template
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
                   Progresso
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
@@ -184,10 +97,6 @@ export default async function AdminCampaignsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {campaigns.map((campaign) => {
-                // Se o status for REVISION (antigo), tratar como IN_PRODUCTION
-                const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
-                const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
-                const Icon = config.icon
                 const progress = campaign.estimatedCreatives > 0
                   ? Math.round((campaign._count.creatives / campaign.estimatedCreatives) * 100)
                   : 0
@@ -218,12 +127,6 @@ export default async function AdminCampaignsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={config.variant} className={config.color}>
-                        <Icon className="h-3 w-3 mr-1" />
-                        {config.label}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm font-semibold">
@@ -249,11 +152,11 @@ export default async function AdminCampaignsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1">
-                        <AdminCampaignViewModal campaignId={campaign.id}>
-                          <Button variant="ghost" size="icon" title="Visualizar">
+                        <Button variant="ghost" size="icon" title="Visualizar" asChild>
+                          <Link href={`/admin/campaigns/${campaign.id}`}>
                             <Eye className="h-4 w-4" />
-                          </Button>
-                        </AdminCampaignViewModal>
+                          </Link>
+                        </Button>
                         <UploadCreativesModal
                           projectId={campaign.id}
                           projectName={campaign.name}

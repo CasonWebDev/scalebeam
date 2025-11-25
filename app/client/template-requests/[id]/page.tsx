@@ -4,27 +4,13 @@ import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, CheckCircle, Clock, XCircle, Sparkles } from "lucide-react"
+import { ArrowLeft, Sparkles } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 export const dynamic = 'force-dynamic'
-
-const statusConfig = {
-  DRAFT: { label: "Rascunho", icon: Clock, color: "bg-gray-500" },
-  IN_PRODUCTION: { label: "Em Análise", icon: Clock, color: "bg-blue-500" },
-  READY: { label: "Template Criado", icon: CheckCircle, color: "bg-green-500" },
-  APPROVED: { label: "Aprovado", icon: CheckCircle, color: "bg-green-600" },
-  REVISION: { label: "Revisão Necessária", icon: XCircle, color: "bg-amber-500" },
-}
-
-const templateStatusConfig = {
-  PENDING_APPROVAL: { label: "Aguardando Aprovação", variant: "secondary" as const },
-  APPROVED: { label: "Aprovado", variant: "default" as const },
-  REJECTED: { label: "Rejeitado", variant: "destructive" as const },
-}
 
 export default async function TemplateRequestPage({
   params,
@@ -72,9 +58,6 @@ export default async function TemplateRequestPage({
   if (project.projectType !== "TEMPLATE_CREATION") {
     redirect(`/client/campaigns/${id}`)
   }
-
-  const statusCfg = statusConfig[project.status]
-  const StatusIcon = statusCfg.icon
 
   // Parse platforms and formats if available
   let platforms: string[] = []
@@ -133,12 +116,6 @@ export default async function TemplateRequestPage({
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${statusCfg.color} text-white`}>
-            <StatusIcon className="h-5 w-5" />
-            <span className="font-medium">{statusCfg.label}</span>
-          </div>
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -172,12 +149,7 @@ export default async function TemplateRequestPage({
           {/* Template Info */}
           {project.template && (
             <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Template Solicitado</h2>
-                <Badge variant={templateStatusConfig[project.template.templateStatus].variant}>
-                  {templateStatusConfig[project.template.templateStatus].label}
-                </Badge>
-              </div>
+              <h2 className="text-lg font-semibold mb-4">Template Solicitado</h2>
 
               <div className="space-y-4">
                 <div>

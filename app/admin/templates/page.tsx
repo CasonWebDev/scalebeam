@@ -14,12 +14,6 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 
 export const dynamic = 'force-dynamic'
 
-const statusConfig = {
-  PENDING_APPROVAL: { label: "Pendente", variant: "secondary" as const },
-  APPROVED: { label: "Aprovado", variant: "default" as const },
-  REJECTED: { label: "Rejeitado", variant: "destructive" as const },
-}
-
 export default async function TemplatesPage() {
   const session = await auth()
 
@@ -104,8 +98,6 @@ export default async function TemplatesPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {templates.map((template) => {
-                const statusCfg = statusConfig[template.templateStatus]
-
                 return (
                   <tr key={template.id} className="hover:bg-secondary/50 transition-colors">
                     <td className="px-6 py-4">
@@ -133,14 +125,9 @@ export default async function TemplatesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={statusCfg.variant}>
-                          {statusCfg.label}
-                        </Badge>
-                        {!template.isActive && (
-                          <Badge variant="outline">Inativo</Badge>
-                        )}
-                      </div>
+                      {!template.isActive && (
+                        <Badge variant="outline">Inativo</Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm">{template._count.projects} uso(s)</span>

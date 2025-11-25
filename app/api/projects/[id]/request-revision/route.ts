@@ -81,18 +81,37 @@ export async function POST(
       },
     })
 
-    console.log('[REQUEST REVISION] Project updated, creating comment')
+    console.log('[REQUEST REVISION] Project updated, creating feedbacks')
 
-    // Criar comentário
-    await prisma.comment.create({
-      data: {
-        projectId,
-        userId: session!.user.id,
-        content: validatedData.comment,
-      },
-    })
+    // Se foram fornecidos IDs de criativos, criar feedback para cada um
+    if (validatedData.creativeIds && validatedData.creativeIds.length > 0) {
+      // Criar feedback para cada criativo selecionado
+      await prisma.$transaction(
+        validatedData.creativeIds.map((creativeId) =>
+          prisma.creativeFeedback.create({
+            data: {
+              creativeId,
+              userId: session!.user.id,
+              content: validatedData.comment,
+              isResolved: false,
+            },
+          })
+        )
+      )
+      console.log(`[REQUEST REVISION] Created ${validatedData.creativeIds.length} creative feedbacks`)
+    } else {
+      // Fallback: criar comentário geral no projeto (comportamento antigo)
+      await prisma.comment.create({
+        data: {
+          projectId,
+          userId: session!.user.id,
+          content: validatedData.comment,
+        },
+      })
+      console.log('[REQUEST REVISION] Created project comment (no creatives selected)')
+    }
 
-    console.log('[REQUEST REVISION] Comment created, creating activity log')
+    console.log('[REQUEST REVISION] Feedbacks created, creating activity log')
 
     // Criar log de atividade
     await prisma.activityLog.create({
@@ -105,6 +124,14 @@ export async function POST(
     })
 
     console.log('[REQUEST REVISION] All operations completed successfully')
+
+    if (!updatedProject) {
+      return NextResponse.json(
+        { error: "Failed to fetch updated project" },
+        { status: 500 }
+      )
+    }
+
     console.log('[REQUEST REVISION] Updated project status:', updatedProject.status)
 
     return NextResponse.json({

@@ -2,42 +2,17 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Zap, Clock, CheckCircle2, AlertTriangle, ArrowLeft, Download } from "lucide-react"
+import { Zap, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { CreativeApprovalGrid } from "@/components/creative-approval-grid"
+import { CreativeGrid } from "@/components/creative-grid"
 import { ProjectAutoRefresh } from "@/components/project-auto-refresh"
 import { ProjectRefreshButton } from "@/components/project-refresh-button"
 import { DownloadAllButton } from "@/components/creative-download-button"
 
 export const dynamic = "force-dynamic"
-
-const STATUS_CONFIG = {
-  DRAFT: {
-    label: "Rascunho",
-    icon: Clock,
-    color: "secondary",
-    alertColor: "border-gray-300 bg-gray-50/50",
-    message: "Campanha em preparação"
-  },
-  IN_PRODUCTION: {
-    label: "Campanha em Produção",
-    icon: Zap,
-    color: "default",
-    alertColor: "border-blue-300 bg-blue-50/50",
-    message: "Criativos sendo gerados! Assim que os primeiros ficarem prontos, você já pode revisar e aprovar."
-  },
-  APPROVED: {
-    label: "Campanha Aprovada",
-    icon: CheckCircle2,
-    color: "default",
-    alertColor: "border-green-300 bg-green-50/50",
-    message: "Campanha aprovada e pronta para suas veiculações"
-  },
-}
 
 export default async function CampaignDetailPage({
   params,
@@ -73,6 +48,17 @@ export default async function CampaignDetailPage({
       },
       creatives: {
         orderBy: { createdAt: "desc" },
+        include: {
+          feedbacks: {
+            include: {
+              user: true,
+            },
+            where: {
+              isResolved: false, // Only show unresolved feedbacks
+            },
+            orderBy: { createdAt: "desc" },
+          },
+        },
       },
     },
   })
@@ -86,13 +72,9 @@ export default async function CampaignDetailPage({
     notFound()
   }
 
-  // Se o status for REVISION (antigo), tratar como IN_PRODUCTION
-  const statusToUse = campaign.status === "REVISION" ? "IN_PRODUCTION" : campaign.status
-  const config = STATUS_CONFIG[statusToUse as keyof typeof STATUS_CONFIG]
-  const Icon = config.icon
   const isGenerating = campaign.status === "IN_PRODUCTION"
   const hasCreatives = campaign.creatives.length > 0
-  // Cliente não precisa aprovar - apenas pode solicitar ajustes quando houver criativos
+  // Cliente pode solicitar ajustes quando houver criativos
   const canRequestChanges = hasCreatives
 
   // Parse briefing data
@@ -122,13 +104,7 @@ export default async function CampaignDetailPage({
             </Link>
           </Button>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight">{campaign.name}</h1>
-              <Badge variant={config.color as any}>
-                <Icon className="h-4 w-4 mr-1" />
-                {config.label}
-              </Badge>
-            </div>
+            <h1 className="text-3xl font-semibold tracking-tight">{campaign.name}</h1>
             <p className="text-muted-foreground mt-1">
               {campaign.brand.name} · {campaign.brand.organization.name}
             </p>
@@ -140,37 +116,21 @@ export default async function CampaignDetailPage({
         </div>
       </div>
 
-      {/* Status Alert */}
-      <Card className={`p-5 border-2 ${config.alertColor}`}>
-        <div className="flex items-start gap-4">
-          <div className={`p-2 rounded-lg ${config.alertColor}`}>
-            <Icon className="h-6 w-6" />
+      {/* Progress Section */}
+      {isGenerating && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between text-sm mb-3">
+            <span className="font-medium">Progresso da Campanha</span>
+            <span className="font-semibold">{campaign.creatives.length} / {campaign.estimatedCreatives} criativos</span>
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg mb-1">{config.label}</h3>
-            <p className="text-sm text-muted-foreground">{config.message}</p>
-
-            {isGenerating && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="font-medium">Progresso da Geração</span>
-                  <span className="font-bold">{progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-primary h-2.5 rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-                <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                  <span>{campaign.creatives.length} criativos gerados</span>
-                  <span>{campaign.estimatedCreatives} solicitados</span>
-                </div>
-              </div>
-            )}
+          <div className="w-full bg-muted rounded-full h-2">
+            <div
+              className="bg-foreground h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Content */}
@@ -179,15 +139,15 @@ export default async function CampaignDetailPage({
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Informações da Campanha</h2>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="p-4 rounded-lg bg-muted">
+              <div className="p-4 rounded-lg border">
                 <p className="text-sm text-muted-foreground mb-1">Criativos Solicitados</p>
                 <p className="text-2xl font-bold">{campaign.estimatedCreatives}</p>
               </div>
-              <div className="p-4 rounded-lg bg-muted">
+              <div className="p-4 rounded-lg border">
                 <p className="text-sm text-muted-foreground mb-1">Criativos Gerados</p>
-                <p className="text-2xl font-bold text-primary">{campaign.creatives.length}</p>
+                <p className="text-2xl font-bold">{campaign.creatives.length}</p>
               </div>
-              <div className="p-4 rounded-lg bg-muted">
+              <div className="p-4 rounded-lg border">
                 <p className="text-sm text-muted-foreground mb-1">Última Atualização</p>
                 <p className="text-sm font-medium">
                   {formatDistanceToNow(new Date(campaign.updatedAt), {
@@ -272,18 +232,18 @@ export default async function CampaignDetailPage({
               </div>
 
               {hasCreatives && (
-                <div className="mb-4 p-4 border-2 border-blue-300 bg-blue-50/50 rounded-lg">
-                  <p className="text-sm text-blue-900">
+                <div className="mb-4 p-4 border rounded-lg bg-muted/30">
+                  <p className="text-sm">
                     <strong>💬 Solicite ajustes:</strong> Selecione os criativos que deseja melhorar e descreva as mudanças. Nossa IA irá gerar novas versões otimizadas.
                   </p>
                 </div>
               )}
 
-              <CreativeApprovalGrid
+              <CreativeGrid
                 creatives={campaign.creatives}
                 projectId={campaign.id}
                 projectName={campaign.name}
-                canApprove={canRequestChanges}
+                canRequestChanges={canRequestChanges}
               />
             </Card>
           ) : (

@@ -210,7 +210,7 @@ export function AdminCampaignViewModal({
                       : campaign.status === "READY"
                       ? "Pronto"
                       : campaign.status === "APPROVED"
-                      ? "Aprovado"
+                      ? "Concluída"
                       : "Em Revisão"}
                   </Badge>
                 </div>

@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, CheckCircle, Clock, XCircle, Zap, FileText, Download } from "lucide-react"
+import { ArrowLeft, Zap, FileText, Download, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
@@ -13,16 +13,9 @@ import { ProjectStatusChange } from "@/components/project-status-change"
 import { UploadCreativesModal } from "@/components/upload-creatives-modal"
 import { DownloadAllButton } from "@/components/creative-download-button"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
+import { DeleteCreativeButton } from "@/components/delete-creative-button"
 
 export const dynamic = 'force-dynamic'
-
-const statusConfig = {
-  DRAFT: { label: "Rascunho", icon: Clock, color: "bg-gray-500" },
-  IN_PRODUCTION: { label: "Em Produção", icon: Clock, color: "bg-blue-500" },
-  READY: { label: "Pronto", icon: CheckCircle, color: "bg-green-500" },
-  APPROVED: { label: "Aprovado", icon: CheckCircle, color: "bg-green-600" },
-  REVISION: { label: "Revisão Necessária", icon: XCircle, color: "bg-amber-500" },
-}
 
 const platformLabels: Record<string, string> = {
   facebook: "Facebook",
@@ -74,6 +67,17 @@ export default async function AdminCampaignPage({
       },
       creatives: {
         orderBy: { createdAt: "desc" },
+        include: {
+          feedbacks: {
+            include: {
+              user: true,
+            },
+            where: {
+              isResolved: false, // Only show unresolved feedbacks
+            },
+            orderBy: { createdAt: "desc" },
+          },
+        },
       },
       comments: {
         include: {
@@ -92,9 +96,6 @@ export default async function AdminCampaignPage({
   if (project.projectType !== "CAMPAIGN") {
     redirect(`/admin/template-requests/${id}`)
   }
-
-  const statusCfg = statusConfig[project.status]
-  const StatusIcon = statusCfg.icon
 
   // Parse campaign data
   let campaignData: any = {}
@@ -148,10 +149,6 @@ export default async function AdminCampaignPage({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${statusCfg.color} text-white`}>
-            <StatusIcon className="h-5 w-5" />
-            <span className="font-medium">{statusCfg.label}</span>
-          </div>
           {project.creatives.length > 0 && (
             <DownloadAllButton
               projectId={project.id}
@@ -289,21 +286,50 @@ export default async function AdminCampaignPage({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {project.creatives.map((creative) => (
                   <div key={creative.id} className="group relative aspect-square rounded-lg border border-border overflow-hidden bg-muted">
+                    {/* Feedback Badge */}
+                    {creative.feedbacks.length > 0 && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <Badge variant="destructive" className="flex items-center gap-1 shadow-lg">
+                          <MessageSquare className="h-3 w-3" />
+                          {creative.feedbacks.length}
+                        </Badge>
+                      </div>
+                    )}
+
                     <Image
                       src={creative.thumbnailUrl || creative.url}
                       alt={creative.name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform"
                     />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="text-center text-white p-4">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                      <div className="text-center text-white p-4 w-full">
                         <p className="text-sm font-medium mb-2">{creative.name}</p>
-                        <Button variant="secondary" size="sm" asChild>
-                          <a href={creative.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-3 w-3 mr-1" />
-                            Baixar
-                          </a>
-                        </Button>
+
+                        {/* Show feedbacks on hover */}
+                        {creative.feedbacks.length > 0 && (
+                          <div className="mb-3 max-h-24 overflow-y-auto text-left bg-black/80 rounded p-2">
+                            {creative.feedbacks.map((feedback) => (
+                              <div key={feedback.id} className="mb-2 last:mb-0">
+                                <p className="text-xs font-semibold">{feedback.user.name}:</p>
+                                <p className="text-xs text-gray-300">{feedback.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 justify-center">
+                          <Button variant="secondary" size="sm" asChild>
+                            <a href={creative.url} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-3 w-3 mr-1" />
+                              Baixar
+                            </a>
+                          </Button>
+                          <DeleteCreativeButton
+                            creativeId={creative.id}
+                            creativeName={creative.name}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
