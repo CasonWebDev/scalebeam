@@ -1,0 +1,222 @@
+openapi: 3.0.0
+info:
+  title: ScaleBeam Figma Plugin API
+  version: 1.0.0
+  description: API for the ScaleBeam Figma Plugin integration.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: hex
+
+  schemas:
+    Brand:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "cmiezh22g0001rqcun04d66xy"
+        name:
+          type: string
+          example: "Mercado Livre"
+        logoUrl:
+          type: string
+          nullable: true
+          example: "https://example.com/logo.png"
+        primaryColor:
+          type: string
+          nullable: true
+          example: "#FF0000"
+        secondaryColor:
+          type: string
+          nullable: true
+          example: "#00FF00"
+      required:
+        - id
+        - name
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "cmiezoyxb000jrqcu5l16sejj"
+        name:
+          type: string
+          example: "Campanha para vagas em Perus"
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - IN_PRODUCTION
+            - READY
+            - APPROVED
+            - REVISION
+          example: "IN_PRODUCTION"
+        briefingContent:
+          type: string
+          nullable: true
+          example: "Briefing content..."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-11-25T19:49:30.190Z"
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+
+    Creative:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "cmiezoyxb000jrqcu5l16sejj"
+        name:
+          type: string
+          example: "Banner Vaga 1"
+        url:
+          type: string
+          example: "https://example.com/image.png"
+        format:
+          type: string
+          example: "png"
+        width:
+          type: integer
+          nullable: true
+          example: 1080
+        height:
+          type: integer
+          nullable: true
+          example: 1080
+        thumbnailUrl:
+          type: string
+          nullable: true
+          example: "https://example.com/thumb.png"
+        projectId:
+          type: string
+          example: "cmiezoyxb000jrqcu5l16sejj"
+      required:
+        - id
+        - name
+        - url
+        - format
+        - projectId
+
+    CreativeInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Banner Vaga 1"
+        url:
+          type: string
+          nullable: true
+          example: "https://example.com/image.png"
+        imageBase64:
+          type: string
+          nullable: true
+          description: "Base64 encoded image data"
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        format:
+          type: string
+          example: "png"
+        width:
+          type: integer
+          nullable: true
+          example: 1080
+        height:
+          type: integer
+          nullable: true
+          example: 1080
+        thumbnailUrl:
+          type: string
+          nullable: true
+          example: "https://example.com/thumb.png"
+      required:
+        - name
+        - format
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/figma/brands:
+    get:
+      summary: List all brands
+      description: Retrieves a list of all brands available in the system.
+      responses:
+        '200':
+          description: A list of brands
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Brand'
+        '401':
+          description: Unauthorized - Invalid or missing token
+
+  /api/figma/brands/{brandId}/campaigns:
+    get:
+      summary: List campaigns for a brand
+      description: Retrieves all campaigns (projects of type CAMPAIGN) for a specific brand.
+      parameters:
+        - in: path
+          name: brandId
+          schema:
+            type: string
+          required: true
+          description: The ID of the brand
+      responses:
+        '200':
+          description: A list of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Campaign'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '500':
+          description: Internal Server Error
+
+  /api/figma/campaigns/{campaignId}/creatives:
+    post:
+      summary: Create a new creative
+      description: Uploads a new creative to a specific campaign.
+      parameters:
+        - in: path
+          name: campaignId
+          schema:
+            type: string
+          required: true
+          description: The ID of the campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreativeInput'
+      responses:
+        '200':
+          description: The created creative
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creative'
+        '400':
+          description: Bad Request - Missing required fields
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '500':
+          description: Internal Server Error
+
