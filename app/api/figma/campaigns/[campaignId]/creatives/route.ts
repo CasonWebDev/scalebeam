@@ -54,8 +54,11 @@ export async function POST(
         });
 
         return NextResponse.json(creative);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating creative:", error);
-        return new NextResponse("Internal Server Error", { status: 500 });
+        return NextResponse.json(
+            { error: error.message || "Internal Server Error", details: error.toString() },
+            { status: 500 }
+        );
     }
 }
