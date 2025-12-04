@@ -12,7 +12,11 @@ import { Calculator, Users, Target } from "lucide-react"
 export default function ROICalculatorPage() {
   // Inputs
   const [currentFTEs, setCurrentFTEs] = useState(2)
-  const [avgFTECost, setAvgFTECost] = useState(8000)
+  const [baseSalary, setBaseSalary] = useState(5000) // Salário base SP
+
+  // Multiplicador de custo operacional (encargos ~80% + benefícios ~20% + infra ~20% = ~2x)
+  const OPERATIONAL_MULTIPLIER = 2
+  const avgFTECost = baseSalary * OPERATIONAL_MULTIPLIER
 
   // Planos com FTEs que substituem
   const plans = [
@@ -78,7 +82,7 @@ export default function ROICalculatorPage() {
       )
     : null
 
-  const hasValidInputs = currentFTEs > 0 && avgFTECost > 0
+  const hasValidInputs = currentFTEs > 0 && baseSalary > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -148,34 +152,43 @@ export default function ROICalculatorPage() {
               <div>
                 <div className="flex justify-between mb-3">
                   <Label className="text-sm font-medium">
-                    Custo médio mensal por FTE (R$)
+                    Salário base mensal (R$)
                   </Label>
                   <span className="text-2xl font-bold text-primary">
-                    {avgFTECost.toLocaleString('pt-BR')}
+                    {baseSalary.toLocaleString('pt-BR')}
                   </span>
                 </div>
                 <Slider
-                  value={[avgFTECost]}
-                  onValueChange={(value) => setAvgFTECost(value[0])}
-                  min={0}
-                  max={20000}
+                  value={[baseSalary]}
+                  onValueChange={(value) => setBaseSalary(value[0])}
+                  min={3000}
+                  max={15000}
                   step={500}
                   className="mb-2"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Inclua salário, encargos, benefícios e custos indiretos
+                  Referência: Designer/Produtor criativo em São Paulo
                 </p>
               </div>
             </div>
 
             {hasValidInputs && (
-              <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Custo mensal atual da operação</span>
+              <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Custo operacional por FTE</span>
+                  <span>
+                    R$ {baseSalary.toLocaleString('pt-BR')} × 2 = <strong>R$ {avgFTECost.toLocaleString('pt-BR')}</strong>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <span className="text-sm text-muted-foreground">Custo mensal total da operação</span>
                   <span className="text-2xl font-bold">
                     {currentMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Multiplicador 2x inclui: encargos trabalhistas (~80%), benefícios (~20%) e infraestrutura (~20%)
+                </p>
               </div>
             )}
           </Card>
@@ -286,8 +299,9 @@ export default function ROICalculatorPage() {
               <Card className="p-6 mt-8 bg-muted/30">
                 <h4 className="font-semibold mb-3">Como calculamos</h4>
                 <div className="text-sm text-muted-foreground space-y-2">
+                  <p><strong>Custo operacional:</strong> Salário base × 2 (encargos + benefícios + infra)</p>
                   <p><strong>Custo atual:</strong> {currentFTEs} FTEs × R$ {avgFTECost.toLocaleString('pt-BR')} = R$ {currentMonthlyCost.toLocaleString('pt-BR')}/mês</p>
-                  <p><strong>Economia mensal:</strong> Custo da equipe atual - Mensalidade ScaleBeam</p>
+                  <p><strong>Economia mensal:</strong> Custo operacional atual - Mensalidade ScaleBeam</p>
                   <p><strong>Economia anual:</strong> (Economia mensal × 12) - Setup único de R$ 6.000</p>
                 </div>
               </Card>
