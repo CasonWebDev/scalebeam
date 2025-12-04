@@ -13,12 +13,13 @@ export default function ROICalculatorPage() {
   // Inputs
   const [currentFTEs, setCurrentFTEs] = useState(2)
   const [baseSalary, setBaseSalary] = useState(5000) // Salário base SP
+  const [campaignsNeeded, setCampaignsNeeded] = useState(2)
 
   // Multiplicador de custo operacional (encargos ~80% + benefícios ~20% + infra ~20% = ~2x)
   const OPERATIONAL_MULTIPLIER = 2
   const avgFTECost = baseSalary * OPERATIONAL_MULTIPLIER
 
-  // Planos com FTEs que substituem
+  // Planos com campanhas disponíveis
   const plans = [
     {
       name: "Starter",
@@ -74,15 +75,21 @@ export default function ROICalculatorPage() {
   // Calcula para todos os planos
   const planResults = plans.map(calculatePlanEconomics)
 
-  // Encontra o melhor plano (maior economia anual positiva)
-  const viablePlans = planResults.filter(p => p.isViable && p.annualSavings > 0)
+  // Filtra planos que atendem às campanhas necessárias
+  const eligiblePlans = planResults.filter(p => p.campaigns >= campaignsNeeded)
+
+  // Encontra o melhor plano elegível (maior economia anual positiva)
+  const viablePlans = eligiblePlans.filter(p => p.isViable && p.annualSavings > 0)
   const bestPlan = viablePlans.length > 0
     ? viablePlans.reduce((best, current) =>
         current.annualSavings > best.annualSavings ? current : best
       )
     : null
 
-  const hasValidInputs = currentFTEs > 0 && baseSalary > 0
+  // Plano mínimo necessário (baseado em campanhas)
+  const minimumPlan = eligiblePlans.length > 0 ? eligiblePlans[0] : null
+
+  const hasValidInputs = currentFTEs > 0 && baseSalary > 0 && campaignsNeeded > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -170,6 +177,26 @@ export default function ROICalculatorPage() {
                   Referência: Designer/Produtor criativo em São Paulo
                 </p>
               </div>
+
+              <div className="md:col-span-2">
+                <div className="flex justify-between mb-3">
+                  <Label className="text-sm font-medium">
+                    Campanhas ativas necessárias
+                  </Label>
+                  <span className="text-2xl font-bold text-primary">{campaignsNeeded}</span>
+                </div>
+                <Slider
+                  value={[campaignsNeeded]}
+                  onValueChange={(value) => setCampaignsNeeded(value[0])}
+                  min={1}
+                  max={5}
+                  step={1}
+                  className="mb-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quantas campanhas de mídia você precisa rodar simultaneamente (Meta Ads, Google Ads)
+                </p>
+              </div>
             </div>
 
             {hasValidInputs && (
@@ -238,12 +265,25 @@ export default function ROICalculatorPage() {
                 </Card>
               )}
 
-              {!bestPlan && (
+              {!bestPlan && minimumPlan && (
+                <Card className="p-8 mb-8 bg-muted/50">
+                  <div className="text-center space-y-2">
+                    <p className="font-medium">
+                      Para {campaignsNeeded} campanha(s), o plano mínimo é o <strong>{minimumPlan.name}</strong> (R$ {minimumPlan.price.toLocaleString('pt-BR')}/mês)
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Com a estrutura atual, o ScaleBeam não gera economia imediata.
+                      Considere aumentar os FTEs ou o salário base para ver cenários de economia.
+                    </p>
+                  </div>
+                </Card>
+              )}
+
+              {!bestPlan && !minimumPlan && (
                 <Card className="p-8 mb-8 bg-muted/50">
                   <div className="text-center">
                     <p className="text-muted-foreground">
-                      Com a estrutura atual, o ScaleBeam não gera economia imediata.
-                      Considere aumentar o custo por FTE ou a quantidade de FTEs para ver cenários de economia.
+                      Nenhum plano atende à quantidade de campanhas necessárias.
                     </p>
                   </div>
                 </Card>
@@ -252,15 +292,20 @@ export default function ROICalculatorPage() {
               {/* All Plans Comparison */}
               <h3 className="text-xl font-semibold mb-4">Comparativo por Plano</h3>
               <div className="grid md:grid-cols-3 gap-4">
-                {planResults.map((plan) => (
+                {planResults.map((plan) => {
+                  const meetsRequirements = plan.campaigns >= campaignsNeeded
+                  return (
                   <Card
                     key={plan.name}
-                    className={`p-6 ${plan === bestPlan ? 'ring-2 ring-primary' : ''} ${!plan.isViable ? 'opacity-60' : ''}`}
+                    className={`p-6 ${plan === bestPlan ? 'ring-2 ring-primary' : ''} ${!meetsRequirements ? 'opacity-50' : !plan.isViable ? 'opacity-70' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-semibold">{plan.name}</h4>
                       {plan === bestPlan && (
                         <Badge variant="default" className="text-xs">Recomendado</Badge>
+                      )}
+                      {!meetsRequirements && (
+                        <Badge variant="outline" className="text-xs">Insuficiente</Badge>
                       )}
                     </div>
 
@@ -292,7 +337,7 @@ export default function ROICalculatorPage() {
                       </div>
                     </div>
                   </Card>
-                ))}
+                )})}
               </div>
 
               {/* Explanation */}
