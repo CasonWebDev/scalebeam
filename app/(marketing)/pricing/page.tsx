@@ -21,9 +21,6 @@ export default function PricingPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login">Entrar</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/signup">Começar Agora</Link>
-            </Button>
           </div>
         </div>
       </header>
@@ -94,10 +91,6 @@ export default function PricingPage() {
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
                 <span>Suporte por e-mail</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span>SLA de entrega de lote</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
@@ -173,10 +166,6 @@ export default function PricingPage() {
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
                 <span>Suporte por Slack</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span>SLA avançado</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />

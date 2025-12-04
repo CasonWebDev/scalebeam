@@ -125,9 +125,6 @@ export default function ROICalculatorPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login">Entrar</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/signup">Começar Agora</Link>
-            </Button>
           </div>
         </div>
       </header>
@@ -324,8 +321,7 @@ export default function ROICalculatorPage() {
                       Custo total: <strong>{minimumPlan.totalPlanCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês</strong>
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Com a estrutura atual, o ScaleBeam não gera economia imediata.
-                      Considere aumentar os FTEs ou o salário base para ver cenários de economia.
+                      Com a estrutura atual, o ScaleBeam não gera economia financeira.
                     </p>
                   </div>
                 </Card>

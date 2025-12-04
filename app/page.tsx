@@ -37,9 +37,6 @@ export default function HomePage() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login">Entrar</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/signup">Começar Agora</Link>
-            </Button>
           </div>
         </div>
       </header>
