@@ -87,9 +87,9 @@ export default async function CampaignDetailPage({
     }
   }
 
-  // Calcular progresso
+  // Calcular progresso (limitado a 100%)
   const progress = campaign.estimatedCreatives > 0
-    ? Math.round((campaign.creatives.length / campaign.estimatedCreatives) * 100)
+    ? Math.min(Math.round((campaign.creatives.length / campaign.estimatedCreatives) * 100), 100)
     : 0
 
   return (
