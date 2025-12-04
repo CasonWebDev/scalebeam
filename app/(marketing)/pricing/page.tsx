@@ -99,6 +99,10 @@ export default function PricingPage() {
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
                 <span>SLA de entrega de lote</span>
               </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                <span>Adicional: R$ 4,40/criativo extra</span>
+              </li>
             </ul>
 
             <div className="bg-muted/50 rounded-lg p-3 mb-6">
@@ -174,6 +178,10 @@ export default function PricingPage() {
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
                 <span>SLA avançado</span>
               </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                <span>Adicional: R$ 3,10/criativo extra</span>
+              </li>
             </ul>
 
             <div className="bg-primary/10 rounded-lg p-3 mb-6">
@@ -246,6 +254,10 @@ export default function PricingPage() {
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 flex-shrink-0" />
                 <span>Treinamento mensal incluído</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 flex-shrink-0" />
+                <span>Adicional: R$ 2,80/criativo extra</span>
               </li>
             </ul>
 

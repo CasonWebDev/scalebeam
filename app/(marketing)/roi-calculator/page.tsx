@@ -31,7 +31,8 @@ export default function ROICalculatorPage() {
       setup: 6000,
       campaigns: 3,
       creatives: 300,
-      fteReplacement: 0.5 // Substitui meio FTE
+      extraCreativePrice: 4.40, // Adicional por peça fora do pacote
+      fteReplacement: 0.5
     },
     {
       name: "Professional",
@@ -39,7 +40,8 @@ export default function ROICalculatorPage() {
       setup: 6000,
       campaigns: 5,
       creatives: 750,
-      fteReplacement: 1.5 // Substitui 1.5 FTEs
+      extraCreativePrice: 3.10,
+      fteReplacement: 1.5
     },
     {
       name: "Agency",
@@ -47,7 +49,8 @@ export default function ROICalculatorPage() {
       setup: 6000,
       campaigns: 10,
       creatives: 2000,
-      fteReplacement: 3 // Substitui 3 FTEs
+      extraCreativePrice: 2.80,
+      fteReplacement: 3
     }
   ]
 
@@ -56,8 +59,15 @@ export default function ROICalculatorPage() {
 
   // Calcula economia para cada plano
   const calculatePlanEconomics = (plan: typeof plans[0]) => {
-    // Comparação direta: Custo da equipe vs Custo ScaleBeam
-    const monthlySavings = currentMonthlyCost - plan.price
+    // Criativos extras necessários (se ultrapassar o pacote)
+    const extraCreatives = Math.max(0, totalCreativesNeeded - plan.creatives)
+    const extraCreativesCost = extraCreatives * plan.extraCreativePrice
+
+    // Custo total do plano (mensalidade + extras)
+    const totalPlanCost = plan.price + extraCreativesCost
+
+    // Comparação: Custo da equipe vs Custo ScaleBeam (com extras)
+    const monthlySavings = currentMonthlyCost - totalPlanCost
 
     // Economia anual (descontando setup no primeiro ano)
     const annualSavings = (monthlySavings * 12) - plan.setup
@@ -69,6 +79,9 @@ export default function ROICalculatorPage() {
 
     return {
       ...plan,
+      extraCreatives,
+      extraCreativesCost,
+      totalPlanCost,
       monthlySavings,
       annualSavings,
       paybackMonths,
@@ -79,10 +92,9 @@ export default function ROICalculatorPage() {
   // Calcula para todos os planos
   const planResults = plans.map(calculatePlanEconomics)
 
-  // Filtra planos que atendem às campanhas E criativos necessários
-  const eligiblePlans = planResults.filter(p =>
-    p.campaigns >= campaignsNeeded && p.creatives >= totalCreativesNeeded
-  )
+  // Filtra planos que atendem às campanhas necessárias
+  // (criativos extras são calculados com custo adicional)
+  const eligiblePlans = planResults.filter(p => p.campaigns >= campaignsNeeded)
 
   // Encontra o melhor plano elegível (maior economia anual positiva)
   const viablePlans = eligiblePlans.filter(p => p.isViable && p.annualSavings > 0)
@@ -303,7 +315,13 @@ export default function ROICalculatorPage() {
                 <Card className="p-8 mb-8 bg-muted/50">
                   <div className="text-center space-y-2">
                     <p className="font-medium">
-                      Para {campaignsNeeded} campanha(s) e {totalCreativesNeeded.toLocaleString()} criativos, o plano mínimo é o <strong>{minimumPlan.name}</strong> (R$ {minimumPlan.price.toLocaleString('pt-BR')}/mês)
+                      Para {campaignsNeeded} campanha(s), o plano mínimo é o <strong>{minimumPlan.name}</strong>
+                      {minimumPlan.extraCreatives > 0 && (
+                        <span className="text-amber-600"> (+{minimumPlan.extraCreatives} criativos extras)</span>
+                      )}
+                    </p>
+                    <p className="text-lg">
+                      Custo total: <strong>{minimumPlan.totalPlanCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês</strong>
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Com a estrutura atual, o ScaleBeam não gera economia imediata.
@@ -317,7 +335,7 @@ export default function ROICalculatorPage() {
                 <Card className="p-8 mb-8 bg-muted/50">
                   <div className="text-center">
                     <p className="text-muted-foreground">
-                      Nenhum plano atende a {totalCreativesNeeded.toLocaleString()} criativos/mês. O plano Agency suporta até 2.000 criativos.
+                      Nenhum plano atende a {campaignsNeeded} campanhas simultâneas. O plano Agency suporta até 10 campanhas.
                     </p>
                   </div>
                 </Card>
@@ -328,22 +346,18 @@ export default function ROICalculatorPage() {
               <div className="grid md:grid-cols-3 gap-4">
                 {planResults.map((plan) => {
                   const meetsCampaigns = plan.campaigns >= campaignsNeeded
-                  const meetsCreatives = plan.creatives >= totalCreativesNeeded
-                  const meetsRequirements = meetsCampaigns && meetsCreatives
                   return (
                   <Card
                     key={plan.name}
-                    className={`p-6 ${plan === bestPlan ? 'ring-2 ring-primary' : ''} ${!meetsRequirements ? 'opacity-50' : !plan.isViable ? 'opacity-70' : ''}`}
+                    className={`p-6 ${plan === bestPlan ? 'ring-2 ring-primary' : ''} ${!meetsCampaigns ? 'opacity-50' : !plan.isViable ? 'opacity-70' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-semibold">{plan.name}</h4>
                       {plan === bestPlan && (
                         <Badge variant="default" className="text-xs">Recomendado</Badge>
                       )}
-                      {!meetsRequirements && (
-                        <Badge variant="outline" className="text-xs">
-                          {!meetsCampaigns && !meetsCreatives ? 'Insuficiente' : !meetsCampaigns ? 'Poucas campanhas' : 'Poucos criativos'}
-                        </Badge>
+                      {!meetsCampaigns && (
+                        <Badge variant="outline" className="text-xs">Poucas campanhas</Badge>
                       )}
                     </div>
 
@@ -353,19 +367,32 @@ export default function ROICalculatorPage() {
                         <span>{plan.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Substitui</span>
-                        <span>{plan.fteReplacement} FTE(s)</span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Campanhas</span>
                         <span>{plan.campaigns}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Criativos/mês</span>
+                        <span className="text-muted-foreground">Criativos inclusos</span>
                         <span>{plan.creatives.toLocaleString()}</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Adicional/criativo</span>
+                        <span>R$ {plan.extraCreativePrice.toFixed(2).replace('.', ',')}</span>
+                      </div>
+
+                      {plan.extraCreatives > 0 && (
+                        <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-amber-600">Extras: {plan.extraCreatives} criativos</span>
+                            <span className="text-amber-600 font-medium">+{plan.extraCreativesCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="pt-3 border-t border-border">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-muted-foreground">Custo total/mês</span>
+                          <span className="font-medium">{plan.totalPlanCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Economia mensal</span>
                           <span className={`font-bold ${plan.monthlySavings > 0 ? 'text-primary' : 'text-destructive'}`}>
@@ -384,7 +411,8 @@ export default function ROICalculatorPage() {
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p><strong>Custo operacional:</strong> Salário base × 2 (encargos + benefícios + infra)</p>
                   <p><strong>Custo atual:</strong> {currentFTEs} FTEs × R$ {avgFTECost.toLocaleString('pt-BR')} = R$ {currentMonthlyCost.toLocaleString('pt-BR')}/mês</p>
-                  <p><strong>Economia mensal:</strong> Custo operacional atual - Mensalidade ScaleBeam</p>
+                  <p><strong>Custo ScaleBeam:</strong> Mensalidade + (Criativos extras × Preço adicional)</p>
+                  <p><strong>Economia mensal:</strong> Custo operacional atual - Custo ScaleBeam</p>
                   <p><strong>Economia anual:</strong> (Economia mensal × 12) - Setup único de R$ 6.000</p>
                 </div>
               </Card>
