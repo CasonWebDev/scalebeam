@@ -73,7 +73,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span>1 Campanha automatizada ativa</span>
+                <span>Até 3 campanhas automatizadas ativas</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
@@ -144,7 +144,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span>Até 3 campanhas automatizadas ativas</span>
+                <span>Até 5 campanhas automatizadas ativas</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary flex-shrink-0" />
@@ -221,7 +221,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 flex-shrink-0" />
-                <span>Até 5 campanhas automatizadas ativas</span>
+                <span>Até 10 campanhas automatizadas ativas</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 flex-shrink-0" />

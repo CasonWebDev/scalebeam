@@ -25,7 +25,7 @@ export default function ROICalculatorPage() {
       name: "Starter",
       price: 8000,
       setup: 6000,
-      campaigns: 1,
+      campaigns: 3,
       creatives: 300,
       fteReplacement: 0.5 // Substitui meio FTE
     },
@@ -33,7 +33,7 @@ export default function ROICalculatorPage() {
       name: "Professional",
       price: 10000,
       setup: 6000,
-      campaigns: 3,
+      campaigns: 5,
       creatives: 750,
       fteReplacement: 1.5 // Substitui 1.5 FTEs
     },
@@ -41,7 +41,7 @@ export default function ROICalculatorPage() {
       name: "Agency",
       price: 15000,
       setup: 6000,
-      campaigns: 5,
+      campaigns: 10,
       creatives: 2000,
       fteReplacement: 3 // Substitui 3 FTEs
     }
@@ -189,7 +189,7 @@ export default function ROICalculatorPage() {
                   value={[campaignsNeeded]}
                   onValueChange={(value) => setCampaignsNeeded(value[0])}
                   min={1}
-                  max={5}
+                  max={10}
                   step={1}
                   className="mb-2"
                 />
