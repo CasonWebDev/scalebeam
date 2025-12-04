@@ -14,7 +14,7 @@ async function main() {
       name: 'ScaleBeam Demo',
       plan: 'PROFESSIONAL',
       maxCreatives: 500,
-      maxBrands: 5,
+      maxTemplates: 10,
     },
   })
   console.log(`  ✓ Organization: ${org.name}`)
