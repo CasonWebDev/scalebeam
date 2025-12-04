@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import Link from "next/link"
-import { Calculator, Users, Zap, TrendingUp, Target, ArrowRight } from "lucide-react"
+import { Calculator, Users, Target } from "lucide-react"
 
 export default function ROICalculatorPage() {
   // Inputs
@@ -47,14 +47,8 @@ export default function ROICalculatorPage() {
 
   // Calcula economia para cada plano
   const calculatePlanEconomics = (plan: typeof plans[0]) => {
-    // FTEs que sobram após adotar o plano
-    const remainingFTEs = Math.max(0, currentFTEs - plan.fteReplacement)
-
-    // Novo custo mensal = FTEs restantes + ScaleBeam
-    const newMonthlyCost = (remainingFTEs * avgFTECost) + plan.price
-
-    // Economia mensal
-    const monthlySavings = currentMonthlyCost - newMonthlyCost
+    // Comparação direta: Custo da equipe vs Custo ScaleBeam
+    const monthlySavings = currentMonthlyCost - plan.price
 
     // Economia anual (descontando setup no primeiro ano)
     const annualSavings = (monthlySavings * 12) - plan.setup
@@ -66,8 +60,6 @@ export default function ROICalculatorPage() {
 
     return {
       ...plan,
-      remainingFTEs,
-      newMonthlyCost,
       monthlySavings,
       annualSavings,
       paybackMonths,
@@ -224,10 +216,10 @@ export default function ROICalculatorPage() {
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>Substitui <strong>{bestPlan.fteReplacement}</strong> FTE(s)</span>
+                        <span>Capacidade equivalente a <strong>{bestPlan.fteReplacement}</strong> FTE(s)</span>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      <span>Você mantém <strong>{bestPlan.remainingFTEs}</strong> FTE(s) + ScaleBeam</span>
+                      <span className="text-muted-foreground">|</span>
+                      <span>Até <strong>{bestPlan.creatives.toLocaleString()}</strong> criativos/mês</span>
                     </div>
                   </div>
                 </Card>
@@ -279,12 +271,6 @@ export default function ROICalculatorPage() {
 
                       <div className="pt-3 border-t border-border">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Novo custo mensal</span>
-                          <span className="font-medium">
-                            {plan.newMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </span>
-                        </div>
-                        <div className="flex justify-between mt-2">
                           <span className="text-muted-foreground">Economia mensal</span>
                           <span className={`font-bold ${plan.monthlySavings > 0 ? 'text-primary' : 'text-destructive'}`}>
                             {plan.monthlySavings > 0 ? '+' : ''}{plan.monthlySavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -301,7 +287,7 @@ export default function ROICalculatorPage() {
                 <h4 className="font-semibold mb-3">Como calculamos</h4>
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p><strong>Custo atual:</strong> {currentFTEs} FTEs × R$ {avgFTECost.toLocaleString('pt-BR')} = R$ {currentMonthlyCost.toLocaleString('pt-BR')}/mês</p>
-                  <p><strong>Novo custo:</strong> (FTEs atuais - FTEs substituídos) × Custo por FTE + Mensalidade ScaleBeam</p>
+                  <p><strong>Economia mensal:</strong> Custo da equipe atual - Mensalidade ScaleBeam</p>
                   <p><strong>Economia anual:</strong> (Economia mensal × 12) - Setup único de R$ 6.000</p>
                 </div>
               </Card>
