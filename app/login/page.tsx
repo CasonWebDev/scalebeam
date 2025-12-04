@@ -87,14 +87,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-6 space-y-2 rounded-lg bg-muted p-4 text-sm">
-          <p className="font-semibold">Usuários de teste:</p>
-          <p><strong>Admin:</strong> admin@scalebeam.com</p>
-          <p><strong>Cliente:</strong> client@scalebeam.com</p>
-          <p className="text-muted-foreground text-xs mt-2">
-            Senha: qualquer valor (desenvolvimento)
-          </p>
-        </div>
       </Card>
     </div>
   )
