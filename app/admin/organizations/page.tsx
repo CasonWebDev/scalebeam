@@ -130,7 +130,7 @@ export default async function OrganizationsPage() {
                           {org.maxCreatives} criativos/mês
                         </p>
                         <p className="text-muted-foreground">
-                          {org.maxBrands} marca(s)
+                          {org.maxTemplates} templates/mês
                         </p>
                       </div>
                     </td>

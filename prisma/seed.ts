@@ -96,7 +96,7 @@ async function main() {
       name: 'Tech Startup Inc',
       plan: 'STARTER',
       maxCreatives: 300,
-      maxBrands: 1,
+      maxTemplates: 3,
       users: {
         connect: [{ id: client1.id }],
       },
@@ -108,7 +108,7 @@ async function main() {
       name: 'Fashion Brand Co',
       plan: 'PROFESSIONAL',
       maxCreatives: 750,
-      maxBrands: 3,
+      maxTemplates: 10,
       users: {
         connect: [{ id: client2.id }],
       },
@@ -120,7 +120,7 @@ async function main() {
       name: 'Creative Agency Ltd',
       plan: 'AGENCY',
       maxCreatives: 2000,
-      maxBrands: 10,
+      maxTemplates: 30,
       users: {
         connect: [{ id: adminUser.id }],
       },

@@ -7,7 +7,6 @@ import Image from "next/image"
 import { auth, signOut } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { ClientBrandModal } from "@/components/client-brand-modal"
-import { Badge } from "@/components/ui/badge"
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +19,6 @@ async function getClientBrands(organizationIds: string[]) {
       organization: {
         select: {
           name: true,
-          maxBrands: true,
         },
       },
       projects: {
@@ -39,22 +37,17 @@ async function getClientBrands(organizationIds: string[]) {
   return brands
 }
 
-async function getOrganizationLimits(organizationIds: string[]) {
-  const organizations = await prisma.organization.findMany({
+async function getOrganizationId(organizationIds: string[]) {
+  const organization = await prisma.organization.findFirst({
     where: {
       id: { in: organizationIds },
     },
     select: {
       id: true,
-      name: true,
-      maxBrands: true,
-      _count: {
-        select: { brands: true },
-      },
     },
   })
 
-  return organizations
+  return organization?.id
 }
 
 export default async function ClientBrandsPage() {
@@ -69,11 +62,7 @@ export default async function ClientBrandsPage() {
   }
 
   const brands = await getClientBrands(session.user.organizationIds)
-  const organizations = await getOrganizationLimits(session.user.organizationIds)
-
-  // Get the first organization (assuming user belongs to one org for now)
-  const primaryOrg = organizations[0]
-  const canCreateBrand = primaryOrg && primaryOrg._count.brands < primaryOrg.maxBrands
+  const organizationId = await getOrganizationId(session.user.organizationIds)
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -106,23 +95,16 @@ export default async function ClientBrandsPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Minhas Marcas</h1>
           <p className="text-muted-foreground mt-1">
-            {brands.length} de {primaryOrg?.maxBrands || 0} marca(s) cadastrada(s)
+            {brands.length} marca(s) cadastrada(s)
           </p>
         </div>
-        {canCreateBrand ? (
-          <ClientBrandModal organizationId={primaryOrg.id}>
+        {organizationId && (
+          <ClientBrandModal organizationId={organizationId}>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Nova Marca
             </Button>
           </ClientBrandModal>
-        ) : (
-          <div className="text-right">
-            <Badge variant="secondary">Limite atingido</Badge>
-            <p className="text-xs text-muted-foreground mt-1">
-              {primaryOrg?._count.brands}/{primaryOrg?.maxBrands} marcas
-            </p>
-          </div>
         )}
       </div>
 
@@ -187,22 +169,16 @@ export default async function ClientBrandsPage() {
         })}
       </div>
 
-      {brands.length === 0 && (
+      {brands.length === 0 && organizationId && (
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center">
             <p className="text-muted-foreground mb-4">Nenhuma marca cadastrada ainda</p>
-            {canCreateBrand ? (
-              <ClientBrandModal organizationId={primaryOrg.id}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Marca
-                </Button>
-              </ClientBrandModal>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Você atingiu o limite de marcas do seu plano
-              </p>
-            )}
+            <ClientBrandModal organizationId={organizationId}>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Primeira Marca
+              </Button>
+            </ClientBrandModal>
           </div>
         </Card>
       )}

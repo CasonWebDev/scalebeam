@@ -57,30 +57,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check organization's brand limit
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
-      include: {
-        _count: {
-          select: { brands: true },
-        },
-      },
-    })
-
-    if (!organization) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 })
-    }
-
-    if (organization._count.brands >= organization.maxBrands) {
-      return NextResponse.json(
-        {
-          error: `Limite de marcas atingido. Seu plano permite até ${organization.maxBrands} marca(s).`,
-        },
-        { status: 400 }
-      )
-    }
-
-    // Create brand
+    // Create brand (marcas são ilimitadas)
     const brand = await prisma.brand.create({
       data: {
         name,

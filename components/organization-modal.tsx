@@ -20,7 +20,7 @@ export function OrganizationModal({ mode, organization, children }: Organization
     name: organization?.name || "",
     plan: organization?.plan || "STARTER",
     maxCreatives: organization?.maxCreatives || 300,
-    maxBrands: organization?.maxBrands || 1,
+    maxTemplates: organization?.maxTemplates || 3,
     paymentStatus: organization?.paymentStatus || "active",
   })
 
@@ -125,12 +125,12 @@ export function OrganizationModal({ mode, organization, children }: Organization
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="maxBrands">Limite de Marcas</Label>
+                <Label htmlFor="maxTemplates">Limite de Templates/Mês</Label>
                 <Input
-                  id="maxBrands"
+                  id="maxTemplates"
                   type="number"
-                  value={formData.maxBrands}
-                  onChange={(e) => setFormData({ ...formData, maxBrands: parseInt(e.target.value) })}
+                  value={formData.maxTemplates}
+                  onChange={(e) => setFormData({ ...formData, maxTemplates: parseInt(e.target.value) })}
                   required
                 />
               </div>

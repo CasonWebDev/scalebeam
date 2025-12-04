@@ -23,7 +23,7 @@ export async function PATCH(
         name: body.name,
         plan: body.plan,
         maxCreatives: body.maxCreatives,
-        maxBrands: body.maxBrands,
+        maxTemplates: body.maxTemplates,
         paymentStatus: body.paymentStatus,
       },
     })

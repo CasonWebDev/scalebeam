@@ -62,7 +62,7 @@ model Organization {
   name            String
   plan            PlanType @default(STARTER)
   maxCreatives    Int      @default(300)
-  maxBrands       Int      @default(1)
+  maxTemplates    Int      @default(3)    // Limite de templates mensais
   paymentStatus   String   @default("active") // active, overdue, suspended
   lastPaymentDate DateTime?
   nextBillingDate DateTime?
