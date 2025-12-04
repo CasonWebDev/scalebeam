@@ -7,81 +7,86 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import Link from "next/link"
-import { Calculator, Users, Zap, TrendingUp, Layers, Eye, Target } from "lucide-react"
+import { Calculator, Users, Zap, TrendingUp, Target, ArrowRight } from "lucide-react"
 
 export default function ROICalculatorPage() {
   // Inputs
   const [currentFTEs, setCurrentFTEs] = useState(2)
-  const [avgFTECost, setAvgFTECost] = useState(8000) // Custo mensal médio de um FTE junior/pleno
-  const [campaignsNeeded, setCampaignsNeeded] = useState(3)
+  const [avgFTECost, setAvgFTECost] = useState(8000)
 
-  // Constants based on pricing page
-  const plans = {
-    starter: {
+  // Planos com FTEs que substituem
+  const plans = [
+    {
       name: "Starter",
       price: 8000,
       setup: 6000,
       campaigns: 1,
       creatives: 300,
-      fteEquivalent: { min: 0.5, max: 1 }
+      fteReplacement: 0.5 // Substitui meio FTE
     },
-    professional: {
+    {
       name: "Professional",
       price: 10000,
       setup: 6000,
       campaigns: 3,
       creatives: 750,
-      fteEquivalent: { min: 1, max: 2 }
+      fteReplacement: 1.5 // Substitui 1.5 FTEs
     },
-    agency: {
+    {
       name: "Agency",
       price: 15000,
       setup: 6000,
       campaigns: 5,
       creatives: 2000,
-      fteEquivalent: { min: 2, max: 4 }
+      fteReplacement: 3 // Substitui 3 FTEs
+    }
+  ]
+
+  // Custo atual da operação
+  const currentMonthlyCost = currentFTEs * avgFTECost
+
+  // Calcula economia para cada plano
+  const calculatePlanEconomics = (plan: typeof plans[0]) => {
+    // FTEs que sobram após adotar o plano
+    const remainingFTEs = Math.max(0, currentFTEs - plan.fteReplacement)
+
+    // Novo custo mensal = FTEs restantes + ScaleBeam
+    const newMonthlyCost = (remainingFTEs * avgFTECost) + plan.price
+
+    // Economia mensal
+    const monthlySavings = currentMonthlyCost - newMonthlyCost
+
+    // Economia anual (descontando setup no primeiro ano)
+    const annualSavings = (monthlySavings * 12) - plan.setup
+
+    // Payback em meses (se houver economia)
+    const paybackMonths = monthlySavings > 0
+      ? Math.ceil(plan.setup / monthlySavings)
+      : null
+
+    return {
+      ...plan,
+      remainingFTEs,
+      newMonthlyCost,
+      monthlySavings,
+      annualSavings,
+      paybackMonths,
+      isViable: monthlySavings > 0
     }
   }
 
-  // Determine recommended plan based on campaigns needed
-  const getRecommendedPlan = () => {
-    if (campaignsNeeded <= 1) return plans.starter
-    if (campaignsNeeded <= 3) return plans.professional
-    return plans.agency
-  }
+  // Calcula para todos os planos
+  const planResults = plans.map(calculatePlanEconomics)
 
-  // Check if we have valid inputs
-  const hasValidInputs = currentFTEs > 0 && avgFTECost > 0 && campaignsNeeded > 0
+  // Encontra o melhor plano (maior economia anual positiva)
+  const viablePlans = planResults.filter(p => p.isViable && p.annualSavings > 0)
+  const bestPlan = viablePlans.length > 0
+    ? viablePlans.reduce((best, current) =>
+        current.annualSavings > best.annualSavings ? current : best
+      )
+    : null
 
-  const recommendedPlan = getRecommendedPlan()
-
-  // Calculations
-  const currentMonthlyCost = currentFTEs * avgFTECost
-  const scalebeamMonthlyCost = recommendedPlan.price
-  const monthlySavings = currentMonthlyCost - scalebeamMonthlyCost
-  const annualSavings = monthlySavings * 12
-
-  // FTE Replacement calculation
-  const fteReplaced = recommendedPlan.fteEquivalent.min
-  const potentialFTEReplaced = recommendedPlan.fteEquivalent.max
-
-  // Payback calculation (including setup)
-  const totalFirstYearInvestment = (recommendedPlan.price * 12) + recommendedPlan.setup
-  const totalCurrentCost = currentMonthlyCost * 12
-  const firstYearSavings = totalCurrentCost - totalFirstYearInvestment
-
-  const paybackMonths = monthlySavings > 0
-    ? Math.ceil(recommendedPlan.setup / monthlySavings)
-    : 0
-
-  // ROI calculation
-  const roi = monthlySavings > 0
-    ? ((annualSavings - recommendedPlan.setup) / totalFirstYearInvestment) * 100
-    : 0
-
-  // Cost per creative comparison
-  const manualCostPerCreative = hasValidInputs ? currentMonthlyCost / (campaignsNeeded * 50) : 0 // Assuming ~50 creatives per campaign manually
-  const scalebeamCostPerCreative = recommendedPlan.price / recommendedPlan.creatives
+  const hasValidInputs = currentFTEs > 0 && avgFTECost > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,24 +115,24 @@ export default function ROICalculatorPage() {
       <section className="container mx-auto px-4 py-16 md:py-24 text-center">
         <Badge variant="outline" className="mb-6">
           <Calculator className="h-3 w-3 mr-1" />
-          Calculadora de Substituição de FTE
+          Calculadora de ROI
         </Badge>
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight mb-6">
-          Calcule Sua Economia em FTEs
+          Quanto Você Economiza com ScaleBeam?
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Descubra quantos FTEs de produção criativa você pode substituir com automação e quanto isso representa em economia real
+          Informe sua estrutura atual e veja quanto pode economizar substituindo parte da equipe por automação
         </p>
       </section>
 
       {/* Calculator */}
       <section className="container mx-auto px-4 pb-24">
-        <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {/* Form */}
-          <Card className="p-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Inputs */}
+          <Card className="p-8 mb-8">
             <h2 className="text-2xl font-semibold mb-6">Sua Operação Atual</h2>
 
-            <div className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
               <div>
                 <div className="flex justify-between mb-3">
                   <Label className="text-sm font-medium">
@@ -169,213 +174,154 @@ export default function ROICalculatorPage() {
                   Inclua salário, encargos, benefícios e custos indiretos
                 </p>
               </div>
-
-              <div>
-                <div className="flex justify-between mb-3">
-                  <Label className="text-sm font-medium">
-                    Campanhas automatizadas necessárias
-                  </Label>
-                  <span className="text-2xl font-bold text-primary">{campaignsNeeded}</span>
-                </div>
-                <Slider
-                  value={[campaignsNeeded]}
-                  onValueChange={(value) => setCampaignsNeeded(value[0])}
-                  min={0}
-                  max={5}
-                  step={1}
-                  className="mb-2"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Quantas campanhas de mídia você roda simultaneamente (Meta Ads, Google Ads)
-                </p>
-              </div>
-
-              {hasValidInputs ? (
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="h-5 w-5 text-primary" />
-                    <span className="font-medium text-sm">Plano Recomendado: {recommendedPlan.name}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {recommendedPlan.campaigns} campanha(s) automatizada(s) | Até {recommendedPlan.creatives.toLocaleString()} criativos/mês
-                  </p>
-                </div>
-              ) : (
-                <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                  <p className="text-sm text-muted-foreground text-center">
-                    Ajuste os valores acima para ver a recomendação
-                  </p>
-                </div>
-              )}
             </div>
+
+            {hasValidInputs && (
+              <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Custo mensal atual da operação</span>
+                  <span className="text-2xl font-bold">
+                    {currentMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Results */}
-          <div className="space-y-6">
-            <Card className="p-8 bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex items-center gap-2 mb-6">
-                <Users className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-semibold">Equivalência em FTEs</h3>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">FTEs que você pode substituir</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-primary">
-                      {fteReplaced} - {potentialFTEReplaced}
-                    </span>
-                    <span className="text-lg text-muted-foreground">FTEs</span>
+          {hasValidInputs ? (
+            <>
+              {/* Best Plan Highlight */}
+              {bestPlan && (
+                <Card className="p-8 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Target className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-semibold">Melhor Opção: {bestPlan.name}</h3>
                   </div>
-                </div>
 
-                <div className="pt-6 border-t border-border">
-                  <div className="text-sm text-muted-foreground mb-2">Economia mensal estimada</div>
-                  <div className="text-4xl font-bold">
-                    {monthlySavings > 0
-                      ? monthlySavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                      : 'R$ 0'
-                    }
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Economia mensal</div>
+                      <div className="text-3xl font-bold text-primary">
+                        {bestPlan.monthlySavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Economia no 1º ano</div>
+                      <div className="text-3xl font-bold">
+                        {bestPlan.annualSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Payback do setup</div>
+                      <div className="text-3xl font-bold">
+                        {bestPlan.paybackMonths} {bestPlan.paybackMonths === 1 ? 'mês' : 'meses'}
+                      </div>
+                    </div>
                   </div>
-                  {monthlySavings <= 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Aumente os FTEs atuais para ver a economia
+
+                  <div className="mt-6 pt-6 border-t border-primary/20">
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>Substitui <strong>{bestPlan.fteReplacement}</strong> FTE(s)</span>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      <span>Você mantém <strong>{bestPlan.remainingFTEs}</strong> FTE(s) + ScaleBeam</span>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {!bestPlan && (
+                <Card className="p-8 mb-8 bg-muted/50">
+                  <div className="text-center">
+                    <p className="text-muted-foreground">
+                      Com a estrutura atual, o ScaleBeam não gera economia imediata.
+                      Considere aumentar o custo por FTE ou a quantidade de FTEs para ver cenários de economia.
                     </p>
-                  )}
-                </div>
-              </div>
-            </Card>
+                  </div>
+                </Card>
+              )}
 
-            <Card className="p-8">
-              <h3 className="text-xl font-semibold mb-6">Comparativo de Custos</h3>
-
-              <div className="space-y-6">
-                <div className="flex justify-between items-center pb-4 border-b border-border">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Custo atual (FTEs)</div>
-                    <div className="text-2xl font-bold">
-                      {currentMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      <span className="text-sm font-normal text-muted-foreground">/mês</span>
+              {/* All Plans Comparison */}
+              <h3 className="text-xl font-semibold mb-4">Comparativo por Plano</h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                {planResults.map((plan) => (
+                  <Card
+                    key={plan.name}
+                    className={`p-6 ${plan === bestPlan ? 'ring-2 ring-primary' : ''} ${!plan.isViable ? 'opacity-60' : ''}`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold">{plan.name}</h4>
+                      {plan === bestPlan && (
+                        <Badge variant="default" className="text-xs">Recomendado</Badge>
+                      )}
                     </div>
-                  </div>
-                  <Users className="h-8 w-8 text-muted-foreground" />
-                </div>
 
-                <div className="flex justify-between items-center pb-4 border-b border-border">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Investimento ScaleBeam ({recommendedPlan.name})</div>
-                    <div className="text-2xl font-bold text-primary">
-                      {scalebeamMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mensalidade</span>
+                        <span>{plan.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Substitui</span>
+                        <span>{plan.fteReplacement} FTE(s)</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Campanhas</span>
+                        <span>{plan.campaigns}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Criativos/mês</span>
+                        <span>{plan.creatives.toLocaleString()}</span>
+                      </div>
+
+                      <div className="pt-3 border-t border-border">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Novo custo mensal</span>
+                          <span className="font-medium">
+                            {plan.newMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between mt-2">
+                          <span className="text-muted-foreground">Economia mensal</span>
+                          <span className={`font-bold ${plan.monthlySavings > 0 ? 'text-primary' : 'text-destructive'}`}>
+                            {plan.monthlySavings > 0 ? '+' : ''}{plan.monthlySavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <Zap className="h-8 w-8 text-primary" />
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Setup único</span>
-                    <span>{recommendedPlan.setup.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Payback do setup</span>
-                    <span className="font-medium">
-                      {paybackMonths > 0 ? `${paybackMonths} mês(es)` : '-'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Economia no 1o ano</span>
-                    <span className="font-bold text-primary">
-                      {firstYearSavings > 0
-                        ? firstYearSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                        : '-'
-                      }
-                    </span>
-                  </div>
-                </div>
-
-                {roi > 0 && (
-                  <div className="mt-4 p-4 rounded-lg bg-primary/10">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">ROI no primeiro ano</span>
-                      <span className="text-2xl font-bold text-primary">{roi.toFixed(0)}%</span>
-                    </div>
-                  </div>
-                )}
+                  </Card>
+                ))}
               </div>
-            </Card>
 
-            <Card className="p-6 bg-muted/50">
-              <h4 className="font-medium mb-3">Custo por criativo</h4>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Produção manual</div>
-                  <div className="text-lg font-bold">
-                    {manualCostPerCreative.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
+              {/* Explanation */}
+              <Card className="p-6 mt-8 bg-muted/30">
+                <h4 className="font-semibold mb-3">Como calculamos</h4>
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p><strong>Custo atual:</strong> {currentFTEs} FTEs × R$ {avgFTECost.toLocaleString('pt-BR')} = R$ {currentMonthlyCost.toLocaleString('pt-BR')}/mês</p>
+                  <p><strong>Novo custo:</strong> (FTEs atuais - FTEs substituídos) × Custo por FTE + Mensalidade ScaleBeam</p>
+                  <p><strong>Economia anual:</strong> (Economia mensal × 12) - Setup único de R$ 6.000</p>
                 </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Com ScaleBeam</div>
-                  <div className="text-lg font-bold text-primary">
-                    {scalebeamCostPerCreative.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section className="container mx-auto px-4 py-24 border-t border-border">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-semibold mb-4">O Que Você Ganha Além da Economia</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Substituir FTEs por automação não é só sobre custo — é sobre previsibilidade e escala
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
+              </Card>
+            </>
+          ) : (
             <Card className="p-8 text-center">
-              <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Target className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Previsibilidade</h3>
               <p className="text-muted-foreground">
-                Sabe exatamente quantos criativos recebe por mês, sem variação de produtividade
+                Ajuste os valores acima para ver a análise de economia
               </p>
             </Card>
-
-            <Card className="p-8 text-center">
-              <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Eye className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">QA Automático</h3>
-              <p className="text-muted-foreground">
-                Elimina 80% dos retrabalhos com validação visual e de conformidade automática
-              </p>
-            </Card>
-
-            <Card className="p-8 text-center">
-              <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Layers className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Consistência Visual</h3>
-              <p className="text-muted-foreground">
-                Brand System ilimitado garante identidade visual em todos os criativos
-              </p>
-            </Card>
-          </div>
+          )}
         </div>
       </section>
 
       {/* CTA */}
       <section className="container mx-auto px-4 py-16">
         <Card className="p-12 text-center bg-gradient-to-br from-primary/10 to-primary/5">
-          <h2 className="text-4xl font-semibold mb-4">Pronto para Substituir FTEs por Automação?</h2>
+          <h2 className="text-4xl font-semibold mb-4">Quer Validar Esses Números?</h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Fale com nosso time e descubra como escalar sua produção criativa com previsibilidade
+            Fale com nosso time para uma análise personalizada da sua operação
           </p>
           <div className="flex gap-4 justify-center">
             <Button size="lg" asChild>
