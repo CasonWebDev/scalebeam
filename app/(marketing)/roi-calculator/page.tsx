@@ -14,6 +14,10 @@ export default function ROICalculatorPage() {
   const [currentFTEs, setCurrentFTEs] = useState(2)
   const [baseSalary, setBaseSalary] = useState(5000) // Salário base SP
   const [campaignsNeeded, setCampaignsNeeded] = useState(2)
+  const [creativesPerCampaign, setCreativesPerCampaign] = useState(100)
+
+  // Total de criativos necessários
+  const totalCreativesNeeded = campaignsNeeded * creativesPerCampaign
 
   // Multiplicador de custo operacional (encargos ~80% + benefícios ~20% + infra ~20% = ~2x)
   const OPERATIONAL_MULTIPLIER = 2
@@ -75,8 +79,10 @@ export default function ROICalculatorPage() {
   // Calcula para todos os planos
   const planResults = plans.map(calculatePlanEconomics)
 
-  // Filtra planos que atendem às campanhas necessárias
-  const eligiblePlans = planResults.filter(p => p.campaigns >= campaignsNeeded)
+  // Filtra planos que atendem às campanhas E criativos necessários
+  const eligiblePlans = planResults.filter(p =>
+    p.campaigns >= campaignsNeeded && p.creatives >= totalCreativesNeeded
+  )
 
   // Encontra o melhor plano elegível (maior economia anual positiva)
   const viablePlans = eligiblePlans.filter(p => p.isViable && p.annualSavings > 0)
@@ -178,10 +184,10 @@ export default function ROICalculatorPage() {
                 </p>
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <div className="flex justify-between mb-3">
                   <Label className="text-sm font-medium">
-                    Campanhas ativas necessárias
+                    Campanhas ativas
                   </Label>
                   <span className="text-2xl font-bold text-primary">{campaignsNeeded}</span>
                 </div>
@@ -194,8 +200,36 @@ export default function ROICalculatorPage() {
                   className="mb-2"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Quantas campanhas de mídia você precisa rodar simultaneamente (Meta Ads, Google Ads)
+                  Campanhas simultâneas (Meta Ads, Google Ads)
                 </p>
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-3">
+                  <Label className="text-sm font-medium">
+                    Criativos por campanha
+                  </Label>
+                  <span className="text-2xl font-bold text-primary">{creativesPerCampaign}</span>
+                </div>
+                <Slider
+                  value={[creativesPerCampaign]}
+                  onValueChange={(value) => setCreativesPerCampaign(value[0])}
+                  min={10}
+                  max={300}
+                  step={10}
+                  className="mb-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Variações criativas por campanha/mês
+                </p>
+              </div>
+            </div>
+
+            {/* Total de criativos */}
+            <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Total de criativos necessários</span>
+                <span className="text-xl font-bold text-primary">{totalCreativesNeeded.toLocaleString()}/mês</span>
               </div>
             </div>
 
@@ -269,7 +303,7 @@ export default function ROICalculatorPage() {
                 <Card className="p-8 mb-8 bg-muted/50">
                   <div className="text-center space-y-2">
                     <p className="font-medium">
-                      Para {campaignsNeeded} campanha(s), o plano mínimo é o <strong>{minimumPlan.name}</strong> (R$ {minimumPlan.price.toLocaleString('pt-BR')}/mês)
+                      Para {campaignsNeeded} campanha(s) e {totalCreativesNeeded.toLocaleString()} criativos, o plano mínimo é o <strong>{minimumPlan.name}</strong> (R$ {minimumPlan.price.toLocaleString('pt-BR')}/mês)
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Com a estrutura atual, o ScaleBeam não gera economia imediata.
@@ -283,7 +317,7 @@ export default function ROICalculatorPage() {
                 <Card className="p-8 mb-8 bg-muted/50">
                   <div className="text-center">
                     <p className="text-muted-foreground">
-                      Nenhum plano atende à quantidade de campanhas necessárias.
+                      Nenhum plano atende a {totalCreativesNeeded.toLocaleString()} criativos/mês. O plano Agency suporta até 2.000 criativos.
                     </p>
                   </div>
                 </Card>
@@ -293,7 +327,9 @@ export default function ROICalculatorPage() {
               <h3 className="text-xl font-semibold mb-4">Comparativo por Plano</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 {planResults.map((plan) => {
-                  const meetsRequirements = plan.campaigns >= campaignsNeeded
+                  const meetsCampaigns = plan.campaigns >= campaignsNeeded
+                  const meetsCreatives = plan.creatives >= totalCreativesNeeded
+                  const meetsRequirements = meetsCampaigns && meetsCreatives
                   return (
                   <Card
                     key={plan.name}
@@ -305,7 +341,9 @@ export default function ROICalculatorPage() {
                         <Badge variant="default" className="text-xs">Recomendado</Badge>
                       )}
                       {!meetsRequirements && (
-                        <Badge variant="outline" className="text-xs">Insuficiente</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {!meetsCampaigns && !meetsCreatives ? 'Insuficiente' : !meetsCampaigns ? 'Poucas campanhas' : 'Poucos criativos'}
+                        </Badge>
                       )}
                     </div>
 
