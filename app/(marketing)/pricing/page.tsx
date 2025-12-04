@@ -105,7 +105,7 @@ export default function PricingPage() {
             </div>
 
             <Button className="w-full mt-auto" asChild>
-              <Link href="/signup">Começar Agora</Link>
+              <Link href="https://calendar.app.google/ePzPqGqMq2E11Xd8A" target="_blank">Começar Agora</Link>
             </Button>
           </Card>
 
@@ -180,7 +180,7 @@ export default function PricingPage() {
             </div>
 
             <Button className="w-full mt-auto" asChild>
-              <Link href="/signup">Solicitar Demo</Link>
+              <Link href="https://calendar.app.google/ePzPqGqMq2E11Xd8A" target="_blank">Solicitar Demo</Link>
             </Button>
           </Card>
 
@@ -377,7 +377,7 @@ export default function PricingPage() {
             Substitua produção manual por capacidade operacional previsível. Fale com nosso time e descubra quanto você pode economizar.
           </p>
           <Button size="lg" asChild>
-            <Link href="/signup">Solicitar Demo</Link>
+            <Link href="https://calendar.app.google/ePzPqGqMq2E11Xd8A" target="_blank">Solicitar Demo</Link>
           </Button>
         </Card>
       </section>

@@ -61,7 +61,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button size="lg" className="text-base" asChild>
-              <Link href="/signup">Solicite uma Demo</Link>
+              <Link href="https://calendar.app.google/ePzPqGqMq2E11Xd8A" target="_blank">Solicite uma Demo</Link>
             </Button>
             <Button size="lg" variant="outline" className="text-base" asChild>
               <Link href="/pricing">Ver Planos</Link>
@@ -351,7 +351,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/signup">Agendar Demo Personalizada</Link>
+              <Link href="https://calendar.app.google/ePzPqGqMq2E11Xd8A" target="_blank">Agendar Demo Personalizada</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/pricing">Ver Planos e Preços</Link>

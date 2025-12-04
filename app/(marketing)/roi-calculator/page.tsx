@@ -432,7 +432,7 @@ export default function ROICalculatorPage() {
           </p>
           <div className="flex gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/signup">Solicitar Demo</Link>
+              <Link href="https://calendar.app.google/ePzPqGqMq2E11Xd8A" target="_blank">Solicitar Demo</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/pricing">Ver Planos</Link>
