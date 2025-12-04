@@ -4,28 +4,84 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import Link from "next/link"
-import { Calculator, Clock, Zap, DollarSign, TrendingUp, Layers, Eye } from "lucide-react"
+import { Calculator, Users, Zap, TrendingUp, Layers, Eye, Target } from "lucide-react"
 
 export default function ROICalculatorPage() {
-  const [monthlyCreatives, setMonthlyCreatives] = useState(25)
-  const [hoursPerCreative, setHoursPerCreative] = useState(6.4)
-  const [hourlyRate, setHourlyRate] = useState(100)
-  const [teamSize, setTeamSize] = useState(3)
+  // Inputs
+  const [currentFTEs, setCurrentFTEs] = useState(2)
+  const [avgFTECost, setAvgFTECost] = useState(8000) // Custo mensal médio de um FTE junior/pleno
+  const [campaignsNeeded, setCampaignsNeeded] = useState(3)
+
+  // Constants based on pricing page
+  const plans = {
+    starter: {
+      name: "Starter",
+      price: 8000,
+      setup: 6000,
+      campaigns: 1,
+      creatives: 300,
+      fteEquivalent: { min: 0.5, max: 1 }
+    },
+    professional: {
+      name: "Professional",
+      price: 10000,
+      setup: 6000,
+      campaigns: 3,
+      creatives: 750,
+      fteEquivalent: { min: 1, max: 2 }
+    },
+    agency: {
+      name: "Agency",
+      price: 15000,
+      setup: 6000,
+      campaigns: 5,
+      creatives: 2000,
+      fteEquivalent: { min: 2, max: 4 }
+    }
+  }
+
+  // Determine recommended plan based on campaigns needed
+  const getRecommendedPlan = () => {
+    if (campaignsNeeded <= 1) return plans.starter
+    if (campaignsNeeded <= 3) return plans.professional
+    return plans.agency
+  }
+
+  // Check if we have valid inputs
+  const hasValidInputs = currentFTEs > 0 && avgFTECost > 0 && campaignsNeeded > 0
+
+  const recommendedPlan = getRecommendedPlan()
 
   // Calculations
-  const manualTimeMonth = monthlyCreatives * hoursPerCreative
-  const aiReduction = 0.85 // 85% reduction
-  const aiTimeMonth = manualTimeMonth * (1 - aiReduction)
+  const currentMonthlyCost = currentFTEs * avgFTECost
+  const scalebeamMonthlyCost = recommendedPlan.price
+  const monthlySavings = currentMonthlyCost - scalebeamMonthlyCost
+  const annualSavings = monthlySavings * 12
 
-  const grossSavings = (manualTimeMonth - aiTimeMonth) * hourlyRate
-  const professionalPlanCost = 12500
-  const netProfit = grossSavings - professionalPlanCost
+  // FTE Replacement calculation
+  const fteReplaced = recommendedPlan.fteEquivalent.min
+  const potentialFTEReplaced = recommendedPlan.fteEquivalent.max
 
-  const monthsToPayback = professionalPlanCost / netProfit
-  const daysToPayback = Math.ceil(monthsToPayback * 30)
-  const roiFirstYear = ((netProfit * 12) / (professionalPlanCost * 12)) * 100
+  // Payback calculation (including setup)
+  const totalFirstYearInvestment = (recommendedPlan.price * 12) + recommendedPlan.setup
+  const totalCurrentCost = currentMonthlyCost * 12
+  const firstYearSavings = totalCurrentCost - totalFirstYearInvestment
+
+  const paybackMonths = monthlySavings > 0
+    ? Math.ceil(recommendedPlan.setup / monthlySavings)
+    : 0
+
+  // ROI calculation
+  const roi = monthlySavings > 0
+    ? ((annualSavings - recommendedPlan.setup) / totalFirstYearInvestment) * 100
+    : 0
+
+  // Cost per creative comparison
+  const manualCostPerCreative = hasValidInputs ? currentMonthlyCost / (campaignsNeeded * 50) : 0 // Assuming ~50 creatives per campaign manually
+  const scalebeamCostPerCreative = recommendedPlan.price / recommendedPlan.creatives
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,13 +110,13 @@ export default function ROICalculatorPage() {
       <section className="container mx-auto px-4 py-16 md:py-24 text-center">
         <Badge variant="outline" className="mb-6">
           <Calculator className="h-3 w-3 mr-1" />
-          Calculadora Interativa
+          Calculadora de Substituição de FTE
         </Badge>
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight mb-6">
-          Calcule Seu ROI
+          Calcule Sua Economia em FTEs
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Descubra quanto tempo e dinheiro você pode economizar automatizando sua produção criativa com IA
+          Descubra quantos FTEs de produção criativa você pode substituir com automação e quanto isso representa em economia real
         </p>
       </section>
 
@@ -69,67 +125,88 @@ export default function ROICalculatorPage() {
         <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {/* Form */}
           <Card className="p-8">
-            <h2 className="text-2xl font-semibold mb-6">Seus Dados</h2>
+            <h2 className="text-2xl font-semibold mb-6">Sua Operação Atual</h2>
 
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Criativos produzidos por mês
-                </label>
-                <Input
-                  type="number"
-                  value={monthlyCreatives}
-                  onChange={(e) => setMonthlyCreatives(Number(e.target.value))}
-                  placeholder="Número de peças criativas que sua equipe produz mensalmente"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Horas por criativo (manual)
-                </label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={hoursPerCreative}
-                  onChange={(e) => setHoursPerCreative(Number(e.target.value))}
-                  placeholder="Tempo médio para criar uma peça do início ao fim"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Custo por hora (R$)
-                </label>
-                <Input
-                  type="number"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(Number(e.target.value))}
-                  placeholder="Custo médio da hora de trabalho criativo na sua empresa"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Tamanho da equipe
-                </label>
-                <Input
-                  type="number"
-                  value={teamSize}
-                  onChange={(e) => setTeamSize(Number(e.target.value))}
-                  placeholder="Número de pessoas envolvidas na produção criativa"
-                />
-              </div>
-
-              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-sm">Com IA da ScaleBeam</span>
+                <div className="flex justify-between mb-3">
+                  <Label className="text-sm font-medium">
+                    FTEs dedicados à produção criativa
+                  </Label>
+                  <span className="text-2xl font-bold text-primary">{currentFTEs}</span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Redução média de 85% no tempo de produção + QA automático + Otimização contínua
+                <Slider
+                  value={[currentFTEs]}
+                  onValueChange={(value) => setCurrentFTEs(value[0])}
+                  min={0}
+                  max={10}
+                  step={1}
+                  className="mb-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Designers, produtores e coordenadores envolvidos na criação de peças
                 </p>
               </div>
+
+              <div>
+                <div className="flex justify-between mb-3">
+                  <Label className="text-sm font-medium">
+                    Custo médio mensal por FTE (R$)
+                  </Label>
+                  <span className="text-2xl font-bold text-primary">
+                    {avgFTECost.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <Slider
+                  value={[avgFTECost]}
+                  onValueChange={(value) => setAvgFTECost(value[0])}
+                  min={0}
+                  max={20000}
+                  step={500}
+                  className="mb-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Inclua salário, encargos, benefícios e custos indiretos
+                </p>
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-3">
+                  <Label className="text-sm font-medium">
+                    Campanhas automatizadas necessárias
+                  </Label>
+                  <span className="text-2xl font-bold text-primary">{campaignsNeeded}</span>
+                </div>
+                <Slider
+                  value={[campaignsNeeded]}
+                  onValueChange={(value) => setCampaignsNeeded(value[0])}
+                  min={0}
+                  max={5}
+                  step={1}
+                  className="mb-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quantas campanhas de mídia você roda simultaneamente (Meta Ads, Google Ads)
+                </p>
+              </div>
+
+              {hasValidInputs ? (
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    <span className="font-medium text-sm">Plano Recomendado: {recommendedPlan.name}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {recommendedPlan.campaigns} campanha(s) automatizada(s) | Até {recommendedPlan.creatives.toLocaleString()} criativos/mês
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Ajuste os valores acima para ver a recomendação
+                  </p>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -137,110 +214,136 @@ export default function ROICalculatorPage() {
           <div className="space-y-6">
             <Card className="p-8 bg-gradient-to-br from-primary/10 to-primary/5">
               <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-semibold">Retorno Sobre Investimento</h3>
+                <Users className="h-6 w-6 text-primary" />
+                <h3 className="text-xl font-semibold">Equivalência em FTEs</h3>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">ROI no Primeiro Ano</div>
-                  <div className="text-5xl font-bold text-primary">
-                    {roiFirstYear.toFixed(0)}%
+                  <div className="text-sm text-muted-foreground mb-1">FTEs que você pode substituir</div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold text-primary">
+                      {fteReplaced} - {potentialFTEReplaced}
+                    </span>
+                    <span className="text-lg text-muted-foreground">FTEs</span>
                   </div>
                 </div>
 
                 <div className="pt-6 border-t border-border">
-                  <div className="text-sm text-muted-foreground mb-2">Payback em</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold">{daysToPayback}</span>
-                    <span className="text-lg text-muted-foreground">dias</span>
+                  <div className="text-sm text-muted-foreground mb-2">Economia mensal estimada</div>
+                  <div className="text-4xl font-bold">
+                    {monthlySavings > 0
+                      ? monthlySavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                      : 'R$ 0'
+                    }
                   </div>
+                  {monthlySavings <= 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Aumente os FTEs atuais para ver a economia
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>
 
-            {monthlyCreatives === 0 || hoursPerCreative === 0 || hourlyRate === 0 ? (
-              <Card className="p-8 text-center">
-                <Calculator className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Ajuste os valores acima para ver seu ROI personalizado
-                </p>
-              </Card>
-            ) : (
-              <Card className="p-8">
-                <h3 className="text-xl font-semibold mb-6">Economia mensal</h3>
+            <Card className="p-8">
+              <h3 className="text-xl font-semibold mb-6">Comparativo de Custos</h3>
 
-                <div className="space-y-6">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center pb-4 border-b border-border">
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Economia bruta/mês</div>
-                    <div className="text-3xl font-bold">
-                      {grossSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    <div className="text-sm text-muted-foreground">Custo atual (FTEs)</div>
+                    <div className="text-2xl font-bold">
+                      {currentMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      <span className="text-sm font-normal text-muted-foreground">/mês</span>
                     </div>
                   </div>
+                  <Users className="h-8 w-8 text-muted-foreground" />
+                </div>
 
-                  <div className="pt-6 border-t border-border">
-                    <div className="text-sm font-medium mb-4">Detalhamento</div>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Tempo manual (mês)</span>
-                        </div>
-                        <span className="font-medium">{manualTimeMonth.toFixed(0)}h</span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-primary" />
-                          <span className="text-sm">Tempo com IA (mês)</span>
-                        </div>
-                        <span className="font-medium text-primary">{aiTimeMonth.toFixed(0)}h</span>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-border">
-                        <span className="text-sm">Economia mensal</span>
-                        <span className="font-bold">
-                          {grossSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Investimento (Professional)</span>
-                        <span className="text-muted-foreground">
-                          {professionalPlanCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-border">
-                        <span className="font-medium">Lucro líquido mensal</span>
-                        <span className="font-bold text-primary">
-                          {netProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </span>
-                      </div>
+                <div className="flex justify-between items-center pb-4 border-b border-border">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Investimento ScaleBeam ({recommendedPlan.name})</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {scalebeamMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      <span className="text-sm font-normal text-muted-foreground">/mês</span>
                     </div>
+                  </div>
+                  <Zap className="h-8 w-8 text-primary" />
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Setup único</span>
+                    <span>{recommendedPlan.setup.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Payback do setup</span>
+                    <span className="font-medium">
+                      {paybackMonths > 0 ? `${paybackMonths} mês(es)` : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Economia no 1o ano</span>
+                    <span className="font-bold text-primary">
+                      {firstYearSavings > 0
+                        ? firstYearSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                        : '-'
+                      }
+                    </span>
                   </div>
                 </div>
-              </Card>
-            )}
+
+                {roi > 0 && (
+                  <div className="mt-4 p-4 rounded-lg bg-primary/10">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">ROI no primeiro ano</span>
+                      <span className="text-2xl font-bold text-primary">{roi.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-muted/50">
+              <h4 className="font-medium mb-3">Custo por criativo</h4>
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Produção manual</div>
+                  <div className="text-lg font-bold">
+                    {manualCostPerCreative.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Com ScaleBeam</div>
+                  <div className="text-lg font-bold text-primary">
+                    {scalebeamCostPerCreative.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Benefits */}
       <section className="container mx-auto px-4 py-24 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-semibold mb-4">Como Conseguimos Esses Resultados?</h2>
+            <h2 className="text-4xl font-semibold mb-4">O Que Você Ganha Além da Economia</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Substituir FTEs por automação não é só sobre custo — é sobre previsibilidade e escala
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-8 text-center">
               <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Layers className="h-8 w-8 text-primary" />
+                <Target className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Orquestração Multi-IA</h3>
+              <h3 className="text-xl font-semibold mb-3">Previsibilidade</h3>
               <p className="text-muted-foreground">
-                Combinamos múltiplos modelos de IA para máxima eficiência e qualidade
+                Sabe exatamente quantos criativos recebe por mês, sem variação de produtividade
               </p>
             </Card>
 
@@ -248,19 +351,19 @@ export default function ROICalculatorPage() {
               <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <Eye className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">QA Automatizado</h3>
+              <h3 className="text-xl font-semibold mb-3">QA Automático</h3>
               <p className="text-muted-foreground">
-                Validação visual e de conformidade automática em todas as peças
+                Elimina 80% dos retrabalhos com validação visual e de conformidade automática
               </p>
             </Card>
 
             <Card className="p-8 text-center">
               <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <TrendingUp className="h-8 w-8 text-primary" />
+                <Layers className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Otimização Contínua</h3>
+              <h3 className="text-xl font-semibold mb-3">Consistência Visual</h3>
               <p className="text-muted-foreground">
-                IA que aprende com performance real e melhora seus criativos
+                Brand System ilimitado garante identidade visual em todos os criativos
               </p>
             </Card>
           </div>
@@ -270,13 +373,18 @@ export default function ROICalculatorPage() {
       {/* CTA */}
       <section className="container mx-auto px-4 py-16">
         <Card className="p-12 text-center bg-gradient-to-br from-primary/10 to-primary/5">
-          <h2 className="text-4xl font-semibold mb-4">Pronto para Começar?</h2>
+          <h2 className="text-4xl font-semibold mb-4">Pronto para Substituir FTEs por Automação?</h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Teste grátis por 14 dias e veja os resultados na prática
+            Fale com nosso time e descubra como escalar sua produção criativa com previsibilidade
           </p>
-          <Button size="lg" asChild>
-            <Link href="/signup">Começar Teste Grátis</Link>
-          </Button>
+          <div className="flex gap-4 justify-center">
+            <Button size="lg" asChild>
+              <Link href="/signup">Solicitar Demo</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/pricing">Ver Planos</Link>
+            </Button>
+          </div>
         </Card>
       </section>
 
