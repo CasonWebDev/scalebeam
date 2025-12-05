@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, FolderOpen, TrendingUp, Sparkles, Megaphone } from "lucide-react"
+import { LayoutDashboard, FileText, FolderOpen, TrendingUp, Sparkles, Megaphone, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -12,6 +12,7 @@ const navigation = [
   { name: "Templates", href: "/client/templates", icon: Sparkles, disabled: false },
   { name: "Campanhas", href: "/client/campaigns", icon: Megaphone, disabled: false },
   { name: "Performance", href: "#", icon: TrendingUp, disabled: true },
+  { name: "Faturamento", href: "/client/billing", icon: CreditCard, disabled: false },
 ]
 
 export function ClientSidebar() {

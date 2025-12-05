@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Folder, Users, Settings, Building2, UserCircle, Layers, Zap } from "lucide-react"
+import { LayoutDashboard, Folder, Users, Settings, Building2, UserCircle, Layers, Zap, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -11,6 +11,7 @@ const navigation = [
   { name: "Templates", href: "/admin/templates", icon: Layers },
   { name: "Marcas", href: "/admin/brands", icon: Users },
   { name: "Organizations", href: "/admin/organizations", icon: Building2 },
+  { name: "Faturamento", href: "/admin/billing", icon: CreditCard },
   { name: "Usuários", href: "/admin/users", icon: UserCircle },
   { name: "Configurações", href: "/admin/settings", icon: Settings },
 ]

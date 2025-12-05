@@ -64,6 +64,7 @@ model Organization {
   maxCreatives    Int      @default(300)
   maxTemplates    Int      @default(3)    // Limite de templates mensais
   paymentStatus   String   @default("active") // active, overdue, suspended
+  billingUrl      String?  // Link de cobrança manual (Stripe, PagSeguro, etc)
   lastPaymentDate DateTime?
   nextBillingDate DateTime?
   createdAt       DateTime @default(now())
