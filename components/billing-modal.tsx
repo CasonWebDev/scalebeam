@@ -26,6 +26,7 @@ import { Edit } from "lucide-react"
 interface Organization {
   id: string
   name: string
+  plan: string
   paymentStatus: string
   billingUrl: string | null
   lastPaymentDate: Date | null
@@ -42,6 +43,7 @@ export function BillingModal({ organization }: BillingModalProps) {
   const router = useRouter()
 
   const [formData, setFormData] = useState({
+    plan: organization.plan,
     paymentStatus: organization.paymentStatus,
     billingUrl: organization.billingUrl || "",
     lastPaymentDate: organization.lastPaymentDate
@@ -61,6 +63,7 @@ export function BillingModal({ organization }: BillingModalProps) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          plan: formData.plan,
           paymentStatus: formData.paymentStatus,
           billingUrl: formData.billingUrl || null,
           lastPaymentDate: formData.lastPaymentDate || null,
@@ -98,23 +101,44 @@ export function BillingModal({ organization }: BillingModalProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="paymentStatus">Status do Pagamento</Label>
-              <Select
-                value={formData.paymentStatus}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, paymentStatus: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="overdue">Atrasado</SelectItem>
-                  <SelectItem value="suspended">Suspenso</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="plan">Plano</Label>
+                <Select
+                  value={formData.plan}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, plan: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STARTER">Starter - R$ 497</SelectItem>
+                    <SelectItem value="PROFESSIONAL">Professional - R$ 997</SelectItem>
+                    <SelectItem value="AGENCY">Agency - R$ 1.997</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="paymentStatus">Status</Label>
+                <Select
+                  value={formData.paymentStatus}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, paymentStatus: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="overdue">Atrasado</SelectItem>
+                    <SelectItem value="suspended">Suspenso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid gap-2">

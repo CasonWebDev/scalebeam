@@ -18,6 +18,7 @@ export async function PUT(
     const organization = await prisma.organization.update({
       where: { id },
       data: {
+        plan: body.plan,
         paymentStatus: body.paymentStatus,
         billingUrl: body.billingUrl,
         lastPaymentDate: body.lastPaymentDate ? new Date(body.lastPaymentDate) : null,
