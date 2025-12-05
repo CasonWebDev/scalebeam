@@ -21,6 +21,8 @@ export async function PUT(
         plan: body.plan,
         paymentStatus: body.paymentStatus,
         billingUrl: body.billingUrl,
+        customBillingValue: body.customBillingValue,
+        billingNotes: body.billingNotes,
         lastPaymentDate: body.lastPaymentDate ? new Date(body.lastPaymentDate) : null,
         nextBillingDate: body.nextBillingDate ? new Date(body.nextBillingDate) : null,
       },

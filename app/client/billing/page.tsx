@@ -16,10 +16,14 @@ const planLabels = {
   AGENCY: "Agency",
 }
 
-const planPrices: Record<string, string> = {
-  STARTER: "R$ 497",
-  PROFESSIONAL: "R$ 997",
-  AGENCY: "R$ 1.997",
+const planPricesInCents: Record<string, number> = {
+  STARTER: 800000,
+  PROFESSIONAL: 1000000,
+  AGENCY: 1500000,
+}
+
+function formatPrice(cents: number): string {
+  return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`
 }
 
 export default async function ClientBillingPage() {
@@ -93,7 +97,14 @@ export default async function ClientBillingPage() {
         <div className="space-y-4">
           <div className="flex justify-between items-center py-3 border-b">
             <span className="text-muted-foreground">Valor mensal</span>
-            <span className="font-semibold text-lg">{planPrices[organization.plan]}/mês</span>
+            <div className="text-right">
+              <span className="font-semibold text-lg">
+                {formatPrice(organization.customBillingValue || planPricesInCents[organization.plan])}/mês
+              </span>
+              {organization.billingNotes && (
+                <p className="text-xs text-muted-foreground">{organization.billingNotes}</p>
+              )}
+            </div>
           </div>
 
           {organization.nextBillingDate && (

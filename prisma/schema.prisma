@@ -65,6 +65,8 @@ model Organization {
   maxTemplates    Int      @default(3)    // Limite de templates mensais
   paymentStatus   String   @default("active") // active, overdue, suspended
   billingUrl      String?  // Link de cobrança (gerado pelo Asaas ou manual)
+  customBillingValue Int?   // Valor customizado em centavos (ex: 49700 = R$ 497,00). Se null, usa valor padrão do plano
+  billingNotes    String?  // Notas sobre cobrança (ex: "+50 criativos adicionais")
   lastPaymentDate DateTime?
   nextBillingDate DateTime?
   // Integração Asaas

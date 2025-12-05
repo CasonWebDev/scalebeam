@@ -16,10 +16,14 @@ const planLabels = {
   AGENCY: "Agency",
 }
 
-const planPrices: Record<string, string> = {
-  STARTER: "R$ 497/mês",
-  PROFESSIONAL: "R$ 997/mês",
-  AGENCY: "R$ 1.997/mês",
+const planPricesInCents: Record<string, number> = {
+  STARTER: 800000,
+  PROFESSIONAL: 1000000,
+  AGENCY: 1500000,
+}
+
+function formatPrice(cents: number): string {
+  return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}/mês`
 }
 
 const paymentStatusConfig: Record<string, {
@@ -146,8 +150,14 @@ export default async function BillingPage() {
                       <div>
                         <Badge variant="outline">{planLabels[org.plan]}</Badge>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {planPrices[org.plan]}
+                          {formatPrice(org.customBillingValue || planPricesInCents[org.plan])}
+                          {org.customBillingValue && (
+                            <span className="text-orange-500 ml-1">(customizado)</span>
+                          )}
                         </p>
+                        {org.billingNotes && (
+                          <p className="text-xs text-orange-500">{org.billingNotes}</p>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">

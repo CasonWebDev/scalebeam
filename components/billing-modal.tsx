@@ -29,6 +29,8 @@ interface Organization {
   plan: string
   paymentStatus: string
   billingUrl: string | null
+  customBillingValue: number | null
+  billingNotes: string | null
   lastPaymentDate: Date | null
   nextBillingDate: Date | null
 }
@@ -42,10 +44,20 @@ export function BillingModal({ organization }: BillingModalProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const planDefaultPrices: Record<string, number> = {
+    STARTER: 800000,
+    PROFESSIONAL: 1000000,
+    AGENCY: 1500000,
+  }
+
   const [formData, setFormData] = useState({
     plan: organization.plan,
     paymentStatus: organization.paymentStatus,
     billingUrl: organization.billingUrl || "",
+    customBillingValue: organization.customBillingValue
+      ? (organization.customBillingValue / 100).toFixed(2).replace(".", ",")
+      : "",
+    billingNotes: organization.billingNotes || "",
     lastPaymentDate: organization.lastPaymentDate
       ? new Date(organization.lastPaymentDate).toISOString().split("T")[0]
       : "",
@@ -59,6 +71,11 @@ export function BillingModal({ organization }: BillingModalProps) {
     setLoading(true)
 
     try {
+      // Converte valor customizado de "497,00" para 49700 centavos
+      const customValueCents = formData.customBillingValue
+        ? Math.round(parseFloat(formData.customBillingValue.replace(",", ".")) * 100)
+        : null
+
       const response = await fetch(`/api/admin/billing/${organization.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -66,6 +83,8 @@ export function BillingModal({ organization }: BillingModalProps) {
           plan: formData.plan,
           paymentStatus: formData.paymentStatus,
           billingUrl: formData.billingUrl || null,
+          customBillingValue: customValueCents,
+          billingNotes: formData.billingNotes || null,
           lastPaymentDate: formData.lastPaymentDate || null,
           nextBillingDate: formData.nextBillingDate || null,
         }),
@@ -114,9 +133,9 @@ export function BillingModal({ organization }: BillingModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="STARTER">Starter - R$ 497</SelectItem>
-                    <SelectItem value="PROFESSIONAL">Professional - R$ 997</SelectItem>
-                    <SelectItem value="AGENCY">Agency - R$ 1.997</SelectItem>
+                    <SelectItem value="STARTER">Starter - R$ 8.000</SelectItem>
+                    <SelectItem value="PROFESSIONAL">Professional - R$ 10.000</SelectItem>
+                    <SelectItem value="AGENCY">Agency - R$ 15.000</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -138,6 +157,40 @@ export function BillingModal({ organization }: BillingModalProps) {
                     <SelectItem value="suspended">Suspenso</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="customBillingValue">Valor Customizado</Label>
+                <Input
+                  id="customBillingValue"
+                  type="text"
+                  placeholder={`${(planDefaultPrices[formData.plan] / 100).toFixed(2).replace(".", ",")}`}
+                  value={formData.customBillingValue}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, customBillingValue: e.target.value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Deixe vazio para usar o valor do plano
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="billingNotes">Observações</Label>
+                <Input
+                  id="billingNotes"
+                  type="text"
+                  placeholder="+50 criativos"
+                  value={formData.billingNotes}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, billingNotes: e.target.value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ex: cobranças adicionais
+                </p>
               </div>
             </div>
 
