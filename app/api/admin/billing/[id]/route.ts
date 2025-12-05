@@ -22,8 +22,6 @@ export async function PUT(
         billingUrl: body.billingUrl,
         lastPaymentDate: body.lastPaymentDate ? new Date(body.lastPaymentDate) : null,
         nextBillingDate: body.nextBillingDate ? new Date(body.nextBillingDate) : null,
-        asaasCustomerId: body.asaasCustomerId,
-        asaasSubscriptionId: body.asaasSubscriptionId,
       },
     })
 

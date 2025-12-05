@@ -30,8 +30,6 @@ interface Organization {
   billingUrl: string | null
   lastPaymentDate: Date | null
   nextBillingDate: Date | null
-  asaasCustomerId: string | null
-  asaasSubscriptionId: string | null
 }
 
 interface BillingModalProps {
@@ -52,8 +50,6 @@ export function BillingModal({ organization }: BillingModalProps) {
     nextBillingDate: organization.nextBillingDate
       ? new Date(organization.nextBillingDate).toISOString().split("T")[0]
       : "",
-    asaasCustomerId: organization.asaasCustomerId || "",
-    asaasSubscriptionId: organization.asaasSubscriptionId || "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,8 +65,6 @@ export function BillingModal({ organization }: BillingModalProps) {
           billingUrl: formData.billingUrl || null,
           lastPaymentDate: formData.lastPaymentDate || null,
           nextBillingDate: formData.nextBillingDate || null,
-          asaasCustomerId: formData.asaasCustomerId || null,
-          asaasSubscriptionId: formData.asaasSubscriptionId || null,
         }),
       })
 
@@ -135,37 +129,7 @@ export function BillingModal({ organization }: BillingModalProps) {
                 }
               />
               <p className="text-xs text-muted-foreground">
-                Link de pagamento do Asaas
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="asaasCustomerId">ID Cliente Asaas</Label>
-              <Input
-                id="asaasCustomerId"
-                placeholder="cus_000000000000"
-                value={formData.asaasCustomerId}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, asaasCustomerId: e.target.value }))
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                ID do cliente no painel Asaas (para webhook)
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="asaasSubscriptionId">ID Assinatura Asaas</Label>
-              <Input
-                id="asaasSubscriptionId"
-                placeholder="sub_000000000000"
-                value={formData.asaasSubscriptionId}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, asaasSubscriptionId: e.target.value }))
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                ID da assinatura (opcional)
+                Cole o link de pagamento do Asaas
               </p>
             </div>
 
