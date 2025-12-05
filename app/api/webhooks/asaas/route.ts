@@ -56,10 +56,17 @@ export async function POST(request: Request) {
     console.log(`Webhook Asaas recebido: ${payload.event}`, JSON.stringify(payload, null, 2))
 
     const { event, payment } = payload
+    const customerId = payment.customer
 
     // Buscar organization pelo asaasCustomerId
+    // Aceita formato cus_XXX ou ID numérico (151308315)
     const organization = await prisma.organization.findFirst({
-      where: { asaasCustomerId: payment.customer },
+      where: {
+        OR: [
+          { asaasCustomerId: customerId },
+          { asaasCustomerId: customerId.replace("cus_", "") },
+        ],
+      },
     })
 
     if (!organization) {
