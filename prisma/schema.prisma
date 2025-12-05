@@ -64,9 +64,12 @@ model Organization {
   maxCreatives    Int      @default(300)
   maxTemplates    Int      @default(3)    // Limite de templates mensais
   paymentStatus   String   @default("active") // active, overdue, suspended
-  billingUrl      String?  // Link de cobrança manual (Stripe, PagSeguro, etc)
+  billingUrl      String?  // Link de cobrança (gerado pelo Asaas ou manual)
   lastPaymentDate DateTime?
   nextBillingDate DateTime?
+  // Integração Asaas
+  asaasCustomerId     String?  // ID do cliente no Asaas
+  asaasSubscriptionId String?  // ID da assinatura no Asaas
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

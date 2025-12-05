@@ -30,6 +30,8 @@ interface Organization {
   billingUrl: string | null
   lastPaymentDate: Date | null
   nextBillingDate: Date | null
+  asaasCustomerId: string | null
+  asaasSubscriptionId: string | null
 }
 
 interface BillingModalProps {
@@ -50,6 +52,8 @@ export function BillingModal({ organization }: BillingModalProps) {
     nextBillingDate: organization.nextBillingDate
       ? new Date(organization.nextBillingDate).toISOString().split("T")[0]
       : "",
+    asaasCustomerId: organization.asaasCustomerId || "",
+    asaasSubscriptionId: organization.asaasSubscriptionId || "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,6 +69,8 @@ export function BillingModal({ organization }: BillingModalProps) {
           billingUrl: formData.billingUrl || null,
           lastPaymentDate: formData.lastPaymentDate || null,
           nextBillingDate: formData.nextBillingDate || null,
+          asaasCustomerId: formData.asaasCustomerId || null,
+          asaasSubscriptionId: formData.asaasSubscriptionId || null,
         }),
       })
 
@@ -122,45 +128,77 @@ export function BillingModal({ organization }: BillingModalProps) {
               <Input
                 id="billingUrl"
                 type="url"
-                placeholder="https://pay.stripe.com/..."
+                placeholder="https://www.asaas.com/c/..."
                 value={formData.billingUrl}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, billingUrl: e.target.value }))
                 }
               />
               <p className="text-xs text-muted-foreground">
-                Cole aqui o link de pagamento (Stripe, PagSeguro, etc.)
+                Link de pagamento do Asaas
               </p>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="lastPaymentDate">Último Pagamento</Label>
+              <Label htmlFor="asaasCustomerId">ID Cliente Asaas</Label>
               <Input
-                id="lastPaymentDate"
-                type="date"
-                value={formData.lastPaymentDate}
+                id="asaasCustomerId"
+                placeholder="cus_000000000000"
+                value={formData.asaasCustomerId}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    lastPaymentDate: e.target.value,
-                  }))
+                  setFormData((prev) => ({ ...prev, asaasCustomerId: e.target.value }))
                 }
               />
+              <p className="text-xs text-muted-foreground">
+                ID do cliente no painel Asaas (para webhook)
+              </p>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="nextBillingDate">Próximo Vencimento</Label>
+              <Label htmlFor="asaasSubscriptionId">ID Assinatura Asaas</Label>
               <Input
-                id="nextBillingDate"
-                type="date"
-                value={formData.nextBillingDate}
+                id="asaasSubscriptionId"
+                placeholder="sub_000000000000"
+                value={formData.asaasSubscriptionId}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    nextBillingDate: e.target.value,
-                  }))
+                  setFormData((prev) => ({ ...prev, asaasSubscriptionId: e.target.value }))
                 }
               />
+              <p className="text-xs text-muted-foreground">
+                ID da assinatura (opcional)
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="lastPaymentDate">Último Pagamento</Label>
+                <Input
+                  id="lastPaymentDate"
+                  type="date"
+                  value={formData.lastPaymentDate}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      lastPaymentDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="nextBillingDate">Próximo Vencimento</Label>
+                <Input
+                  id="nextBillingDate"
+                  type="date"
+                  value={formData.nextBillingDate}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      nextBillingDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
