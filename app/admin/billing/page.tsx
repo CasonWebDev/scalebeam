@@ -40,21 +40,6 @@ export default async function BillingPage() {
   }
 
   const organizations = await prisma.organization.findMany({
-    include: {
-      users: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-        take: 1,
-      },
-      _count: {
-        select: {
-          brands: true,
-        },
-      },
-    },
     orderBy: [
       { paymentStatus: "asc" },
       { nextBillingDate: "asc" },
@@ -151,19 +136,11 @@ export default async function BillingPage() {
               {organizations.map((org) => {
                 const paymentCfg = paymentStatusConfig[org.paymentStatus]
                 const StatusIcon = paymentCfg.icon
-                const mainContact = org.users[0]
 
                 return (
                   <tr key={org.id} className="hover:bg-secondary/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium">{org.name}</p>
-                        {mainContact && (
-                          <p className="text-xs text-muted-foreground">
-                            {mainContact.name || mainContact.email}
-                          </p>
-                        )}
-                      </div>
+                      <p className="font-medium">{org.name}</p>
                     </td>
                     <td className="px-6 py-4">
                       <div>

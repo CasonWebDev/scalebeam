@@ -4,18 +4,9 @@ import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  CreditCard,
-  ExternalLink,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Calendar,
-  Building2,
-} from "lucide-react"
-import { format, formatDistanceToNow } from "date-fns"
+import { CreditCard, ExternalLink, AlertCircle } from "lucide-react"
+import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
@@ -26,53 +17,9 @@ const planLabels = {
 }
 
 const planPrices: Record<string, string> = {
-  STARTER: "R$ 497/mês",
-  PROFESSIONAL: "R$ 997/mês",
-  AGENCY: "R$ 1.997/mês",
-}
-
-const planFeatures: Record<string, string[]> = {
-  STARTER: [
-    "Até 300 criativos/mês",
-    "3 templates/mês",
-    "Suporte por e-mail",
-  ],
-  PROFESSIONAL: [
-    "Até 750 criativos/mês",
-    "10 templates/mês",
-    "Suporte prioritário",
-  ],
-  AGENCY: [
-    "Até 2.000 criativos/mês",
-    "30 templates/mês",
-    "Suporte dedicado",
-  ],
-}
-
-const paymentStatusConfig: Record<string, {
-  label: string
-  variant: "default" | "destructive" | "secondary"
-  icon: typeof CheckCircle
-  message: string
-}> = {
-  active: {
-    label: "Ativo",
-    variant: "default",
-    icon: CheckCircle,
-    message: "Seu pagamento está em dia. Obrigado!",
-  },
-  overdue: {
-    label: "Atrasado",
-    variant: "destructive",
-    icon: AlertCircle,
-    message: "Seu pagamento está atrasado. Por favor, regularize para evitar suspensão.",
-  },
-  suspended: {
-    label: "Suspenso",
-    variant: "secondary",
-    icon: Clock,
-    message: "Sua conta está suspensa por falta de pagamento. Regularize para restaurar o acesso.",
-  },
+  STARTER: "R$ 497",
+  PROFESSIONAL: "R$ 997",
+  AGENCY: "R$ 1.997",
 }
 
 export default async function ClientBillingPage() {
@@ -86,7 +33,6 @@ export default async function ClientBillingPage() {
     redirect("/admin")
   }
 
-  // Get the first organization for the client
   const organizationId = session.user.organizationIds[0]
   if (!organizationId) {
     redirect("/client")
@@ -94,197 +40,97 @@ export default async function ClientBillingPage() {
 
   const organization = await prisma.organization.findUnique({
     where: { id: organizationId },
-    include: {
-      _count: {
-        select: {
-          brands: true,
-        },
-      },
-    },
   })
 
   if (!organization) {
     redirect("/client")
   }
 
-  const statusConfig = paymentStatusConfig[organization.paymentStatus]
-  const StatusIcon = statusConfig.icon
+  const isOverdue = organization.paymentStatus === "overdue"
+  const isSuspended = organization.paymentStatus === "suspended"
+  const hasIssue = isOverdue || isSuspended
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6 p-8 max-w-2xl">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <CreditCard className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Faturamento</h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie sua assinatura e pagamentos
-            </p>
-          </div>
-        </div>
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Faturamento</h1>
+        <p className="text-muted-foreground mt-1">
+          Gerencie sua assinatura
+        </p>
       </div>
 
-      {/* Payment Status Alert */}
-      {organization.paymentStatus !== "active" && (
-        <Card className={`p-4 border-2 ${
-          organization.paymentStatus === "overdue"
-            ? "border-red-500 bg-red-500/5"
-            : "border-gray-500 bg-gray-500/5"
-        }`}>
-          <div className="flex items-center gap-3">
-            <StatusIcon className={`h-5 w-5 ${
-              organization.paymentStatus === "overdue" ? "text-red-500" : "text-gray-500"
-            }`} />
-            <p className="text-sm font-medium">{statusConfig.message}</p>
+      {/* Alert if payment issue */}
+      {hasIssue && (
+        <Card className="p-4 border-red-500/50 bg-red-500/5">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+            <div>
+              <p className="font-medium text-red-500">
+                {isOverdue ? "Pagamento atrasado" : "Conta suspensa"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isOverdue
+                  ? "Regularize seu pagamento para continuar utilizando a plataforma."
+                  : "Sua conta está suspensa. Regularize o pagamento para restaurar o acesso."
+                }
+              </p>
+            </div>
           </div>
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Plan Info */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold">Seu Plano</h2>
-                <p className="text-sm text-muted-foreground">
-                  {organization.name}
-                </p>
-              </div>
-              <Badge variant="outline" className="text-lg px-4 py-1">
-                {planLabels[organization.plan]}
-              </Badge>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 mb-6">
-              <div className="p-4 rounded-lg border">
-                <p className="text-sm text-muted-foreground mb-1">Valor Mensal</p>
-                <p className="text-2xl font-bold">{planPrices[organization.plan]}</p>
-              </div>
-              <div className="p-4 rounded-lg border">
-                <p className="text-sm text-muted-foreground mb-1">Status</p>
-                <Badge variant={statusConfig.variant} className="gap-1">
-                  <StatusIcon className="h-3 w-3" />
-                  {statusConfig.label}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Recursos inclusos:</p>
-              <ul className="space-y-2">
-                {planFeatures[organization.plan].map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
-
-          {/* Payment Dates */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Histórico de Pagamento</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center gap-3 p-4 rounded-lg border">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Último Pagamento</p>
-                  <p className="font-medium">
-                    {organization.lastPaymentDate
-                      ? format(organization.lastPaymentDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                      : "Nenhum registro"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-4 rounded-lg border">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Próximo Vencimento</p>
-                  <p className="font-medium">
-                    {organization.nextBillingDate ? (
-                      <>
-                        {format(organization.nextBillingDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ({formatDistanceToNow(organization.nextBillingDate, { addSuffix: true, locale: ptBR })})
-                        </span>
-                      </>
-                    ) : (
-                      "Não definido"
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
+      {/* Plan Card */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">Seu Plano</span>
+          </div>
+          <Badge variant="outline">{planLabels[organization.plan]}</Badge>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Payment Action */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Realizar Pagamento</h2>
-            {organization.billingUrl ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Clique no botão abaixo para acessar sua página de pagamento segura.
-                </p>
-                <Button className="w-full" asChild>
-                  <a
-                    href={organization.billingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Pagar Agora
-                  </a>
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">
-                  Link de pagamento ainda não configurado.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Entre em contato com o suporte para mais informações.
-                </p>
-              </div>
-            )}
-          </Card>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center py-3 border-b">
+            <span className="text-muted-foreground">Valor mensal</span>
+            <span className="font-semibold text-lg">{planPrices[organization.plan]}/mês</span>
+          </div>
 
-          {/* Organization Info */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Sua Conta</h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>{organization.name}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{organization._count.brands} marca(s) cadastrada(s)</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Limite: {organization.maxCreatives} criativos/mês</span>
-              </div>
+          {organization.nextBillingDate && (
+            <div className="flex justify-between items-center py-3 border-b">
+              <span className="text-muted-foreground">Próximo vencimento</span>
+              <span>{format(organization.nextBillingDate, "dd 'de' MMMM", { locale: ptBR })}</span>
             </div>
-          </Card>
+          )}
 
-          {/* Support */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Precisa de Ajuda?</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Entre em contato com nosso suporte para dúvidas sobre faturamento.
-            </p>
-            <Button variant="outline" className="w-full" asChild>
-              <a href="mailto:suporte@scalebeam.ai">
-                Contatar Suporte
-              </a>
-            </Button>
-          </Card>
+          <div className="flex justify-between items-center py-3">
+            <span className="text-muted-foreground">Status</span>
+            <Badge variant={hasIssue ? "destructive" : "default"}>
+              {organization.paymentStatus === "active" ? "Em dia" :
+               organization.paymentStatus === "overdue" ? "Atrasado" : "Suspenso"}
+            </Badge>
+          </div>
         </div>
-      </div>
+
+        {/* Payment Button */}
+        {organization.billingUrl ? (
+          <Button className="w-full mt-6" size="lg" asChild>
+            <a href={organization.billingUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {hasIssue ? "Regularizar Pagamento" : "Acessar Pagamento"}
+            </a>
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center mt-6">
+            Link de pagamento não disponível. Entre em contato com o suporte.
+          </p>
+        )}
+      </Card>
+
+      {/* Support */}
+      <p className="text-sm text-muted-foreground text-center">
+        Dúvidas? Entre em contato: <a href="mailto:suporte@scalebeam.ai" className="underline">suporte@scalebeam.ai</a>
+      </p>
     </div>
   )
 }
