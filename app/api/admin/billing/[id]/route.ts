@@ -15,6 +15,9 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
 
+    console.log("Updating billing for org:", id)
+    console.log("Body received:", JSON.stringify(body, null, 2))
+
     const organization = await prisma.organization.update({
       where: { id },
       data: {
